@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import MediaCarousel from './MediaCarousel';
 
 export default function WatchlistTable({ properties }: { properties: any[] }) {
   const router = useRouter();
@@ -105,11 +106,9 @@ export default function WatchlistTable({ properties }: { properties: any[] }) {
             </div>
 
             {/* Images Placeholder */}
-            {selectedProperty.images && selectedProperty.images.length > 0 ? (
-              <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '24px' }}>
-                {selectedProperty.images.map((img: string, i: number) => (
-                  <img key={i} src={img} alt="PG" style={{ height: '150px', borderRadius: '8px', objectFit: 'cover' }} />
-                ))}
+            {selectedProperty.media && selectedProperty.media.length > 0 ? (
+              <div style={{ marginBottom: '24px', borderRadius: '12px', overflow: 'hidden' }}>
+                <MediaCarousel media={selectedProperty.media} height="250px" objectFit="cover" />
               </div>
             ) : (
               <div style={{ width: '100%', height: '150px', background: 'var(--surface-border)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', color: 'var(--text-muted)' }}>

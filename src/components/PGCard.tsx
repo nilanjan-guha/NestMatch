@@ -67,7 +67,7 @@ export default function PGCard({ pg, isOwnerView = false, currentUserRole = null
         <div style={{ position: 'relative' }}>
           <MediaCarousel media={pg.media || []} height="200px" objectFit="cover" />
           
-          {!isOwnerView && (!currentUserRole || currentUserRole === 'searcher') && (
+          {!isOwnerView && (
             <button 
               onClick={handleSave}
               disabled={saving}
@@ -108,11 +108,9 @@ export default function PGCard({ pg, isOwnerView = false, currentUserRole = null
               <p style={{ fontSize: '22px', fontWeight: 'bold', color: 'var(--secondary)' }}>₹{pg.pricing.monthly_rent}</p>
             </div>
             {!isOwnerView ? (
-              (!currentUserRole || currentUserRole === 'searcher') && (
-                <button onClick={handleBook} disabled={booking} style={{ background: 'linear-gradient(45deg, var(--primary), var(--secondary))', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
-                  {booking ? '...' : 'Book Visit'}
-                </button>
-              )
+              <button onClick={handleBook} disabled={booking} style={{ background: 'linear-gradient(45deg, var(--primary), var(--secondary))', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+                {booking ? '...' : 'Book Visit'}
+              </button>
             ) : (
               <button style={{ background: 'var(--foreground)', color: 'var(--background)', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
                 Edit Details
@@ -195,7 +193,7 @@ export default function PGCard({ pg, isOwnerView = false, currentUserRole = null
                 </div>
               </div>
 
-              {!isOwnerView && (!currentUserRole || currentUserRole === 'searcher') && (
+              {!isOwnerView && (
                 <div style={{ display: 'flex', gap: '15px', marginTop: '40px' }}>
                   <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '16px', background: isSaved ? 'rgba(239, 68, 68, 0.1)' : 'var(--surface)', border: `1px solid ${isSaved ? 'rgba(239, 68, 68, 0.3)' : 'var(--surface-border)'}`, color: isSaved ? '#ef4444' : 'var(--foreground)', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer' }}>
                     {saving ? '...' : (isSaved ? '❤️ Saved to Watchlist' : '🤍 Save for Later')}

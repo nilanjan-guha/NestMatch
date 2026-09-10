@@ -24,15 +24,18 @@ export async function completeOnboarding(role: 'owner' | 'searcher', name: strin
     user = await User.findOne({ email });
   }
 
+  const updateData: any = {
+    role,
+    onboarded: true,
+    clerkId: userId,
+  };
+  if (name) updateData.name = name;
+  if (phone) updateData.phone = phone;
+
   if (user) {
-    user.role = role;
-    user.onboarded = true;
-    user.clerkId = userId;
-    if (name) user.name = name;
-    if (phone) user.phone = phone;
-    await user.save();
+    await User.updateOne({ _id: user._id }, { $set: updateData });
   } else {
-    user = await User.create({
+    await User.create({
       clerkId: userId,
       email: email || `${userId}@placeholder.com`,
       name: name || clerkUser.firstName || email?.split('@')[0] || 'User',

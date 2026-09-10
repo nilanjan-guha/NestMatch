@@ -19,7 +19,10 @@ export default function OnboardingPage() {
         setName(user.fullName || user.firstName || '');
       }
       if (user.primaryPhoneNumber?.phoneNumber) {
-        setPhone(user.primaryPhoneNumber.phoneNumber);
+        let p = user.primaryPhoneNumber.phoneNumber;
+        if (p.startsWith('+91')) p = p.slice(3);
+        else if (p.startsWith('91')) p = p.slice(2);
+        setPhone(p);
       }
     }
   }, [user]);
@@ -30,9 +33,15 @@ export default function OnboardingPage() {
       return;
     }
 
+    if (phone.length !== 10) {
+      toast.error("Phone number must be exactly 10 digits.");
+      return;
+    }
+
     startTransition(async () => {
       try {
-        await completeOnboarding(role, name, phone);
+        const fullPhone = `+91${phone}`;
+        await completeOnboarding(role, name, fullPhone);
         toast.success(`Welcome to NestMatch! You are now a ${role === 'owner' ? 'PG Owner' : 'PG Searcher'}.`);
         window.location.href = '/';
       } catch (error) {
@@ -93,21 +102,39 @@ export default function OnboardingPage() {
         </div>
         <div>
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Phone Number *</label>
-          <input 
-            type="tel" 
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="e.g. +91 9876543210"
-            style={{
-              width: '100%',
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
               padding: '12px 16px',
               borderRadius: '8px',
               border: '1px solid var(--surface-border)',
-              background: 'var(--background)',
+              background: 'var(--surface-hover)',
               color: 'var(--text)',
-              fontSize: '16px'
-            }}
-          />
+              fontSize: '16px',
+              userSelect: 'none'
+            }}>
+              🇮🇳 +91
+            </div>
+            <input 
+              type="tel" 
+              value={phone}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, '');
+                if (val.length <= 10) setPhone(val);
+              }}
+              placeholder="9876543210"
+              style={{
+                flex: 1,
+                padding: '12px 16px',
+                borderRadius: '8px',
+                border: '1px solid var(--surface-border)',
+                background: 'var(--background)',
+                color: 'var(--text)',
+                fontSize: '16px'
+              }}
+            />
+          </div>
         </div>
       </div>
 

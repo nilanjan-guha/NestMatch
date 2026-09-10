@@ -11,6 +11,7 @@ export default function MediaCarousel({
   objectFit?: 'contain' | 'cover' 
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [fullScreen, setFullScreen] = useState(false);
 
   if (!media || media.length === 0) {
     return (
@@ -40,14 +41,16 @@ export default function MediaCarousel({
           key={currentMedia}
           src={currentMedia} 
           controls 
-          style={{ width: '100%', height: '100%', objectFit, animation: 'fadeIn 0.3s ease-in-out' }}
+          style={{ width: '100%', height: '100%', objectFit, animation: 'fadeIn 0.3s ease-in-out', cursor: 'pointer' }}
+          onClick={(e) => { e.stopPropagation(); setFullScreen(true); }}
         />
       ) : (
         <img 
           key={currentMedia}
           src={currentMedia} 
           alt={`Media ${currentIndex + 1}`} 
-          style={{ width: '100%', height: '100%', objectFit, animation: 'fadeIn 0.3s ease-in-out' }}
+          style={{ width: '100%', height: '100%', objectFit, animation: 'fadeIn 0.3s ease-in-out', cursor: 'pointer' }}
+          onClick={(e) => { e.stopPropagation(); setFullScreen(true); }}
         />
       )}
       
@@ -90,6 +93,48 @@ export default function MediaCarousel({
               onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
             />
           ))}
+        </div>
+      )}
+
+      {/* Full Screen Lightbox */}
+      {fullScreen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.9)', zIndex: 100000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }} onClick={(e) => { e.stopPropagation(); setFullScreen(false); }}>
+          
+          <button 
+            onClick={(e) => { e.stopPropagation(); setFullScreen(false); }}
+            style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: 'white', fontSize: '30px', cursor: 'pointer', zIndex: 100001 }}
+          >
+            ✕
+          </button>
+
+          {media.length > 1 && (
+            <>
+              <button onClick={(e) => { e.stopPropagation(); handlePrev(); }} style={navButtonStyle('left')}>&#10094;</button>
+              <button onClick={(e) => { e.stopPropagation(); handleNext(); }} style={navButtonStyle('right')}>&#10095;</button>
+            </>
+          )}
+
+          {isVideo ? (
+            <video 
+              key={currentMedia}
+              src={currentMedia} 
+              controls 
+              style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain' }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <img 
+              key={currentMedia}
+              src={currentMedia} 
+              alt="Fullscreen Media" 
+              style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain' }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
         </div>
       )}
     </div>

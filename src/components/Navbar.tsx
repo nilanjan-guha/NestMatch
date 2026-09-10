@@ -12,7 +12,7 @@ export default async function Navbar() {
   const clerkUser = await currentUser();
   const email = clerkUser?.emailAddresses[0]?.emailAddress;
   const phone = clerkUser?.phoneNumbers?.[0]?.phoneNumber;
-  
+
   // Check if this user is the Super Admin defined in .env
   const isSuperAdmin = (email && email === process.env.ADMIN_EMAIL) || (phone && phone === process.env.ADMIN_PHONE);
 
@@ -21,21 +21,26 @@ export default async function Navbar() {
   if (userId) {
     await connectToDatabase();
     dbUser = await User.findOne({ clerkId: userId });
-    
-    // Auto-link legacy accounts that don't have a clerkId yet
+
+    // Auto-link legacy accounts that don't have a clerkId yet or handle bypassed onboarding
     if (!dbUser && email) {
+      const isConfigAdmin = email === process.env.ADMIN_EMAIL;
+      const userPhone = phone || (isConfigAdmin ? process.env.ADMIN_PHONE : '');
+
       // Use returnDocument: 'after' to fix Mongoose warning, and add upsert: true
       dbUser = await User.findOneAndUpdate(
         { email },
-        { 
+        {
           clerkId: userId,
           name: clerkUser?.firstName || email.split('@')[0],
-          email: email
+          email: email,
+          ...(userPhone && { phone: userPhone }),
+          ...(isConfigAdmin && { role: 'admin', onboarded: true })
         },
         { returnDocument: 'after', upsert: true }
       );
     }
-    
+
     if (dbUser) {
       session = { user: dbUser };
     }
@@ -45,13 +50,13 @@ export default async function Navbar() {
 
   let hasProperties = false;
   let hasSavedProperties = false;
-  
+
   if (session && !isSuperAdmin) {
     await connectToDatabase();
-    
+
     // Check if the current user has created any properties (Only needed for owners)
     if (role === 'owner') {
-      const propertyCount = await PGProperty.countDocuments({ 
+      const propertyCount = await PGProperty.countDocuments({
         owner_id: (session.user as any)._id
       });
       hasProperties = propertyCount > 0;
@@ -70,50 +75,56 @@ export default async function Navbar() {
         <Link href="/" style={{ fontSize: '24px', fontWeight: 'bold', textDecoration: 'none', color: 'var(--foreground)', display: 'flex', alignItems: 'center', gap: '10px' }}>
           NestMatch
         </Link>
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-          <ThemeToggle />
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
           {userId ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <span style={{ color: 'var(--text-muted)', fontSize: '14px', whiteSpace: 'nowrap' }}>
-                Hello, {clerkUser?.firstName || email?.split('@')[0]}
-              </span>
-              
-              {(isSuperAdmin || dbUser?.onboarded) && (
-                <>
-                  {/* Watchlist ONLY shows if they have saved properties (both owners and searchers) */}
-                  {!isSuperAdmin && hasSavedProperties && (
-                    <Link href="/saved" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--foreground)', textDecoration: 'none', fontWeight: 'bold', borderRadius: '8px' }}>
+            <>
+              {/* Navigation Links Group */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {(isSuperAdmin || dbUser?.onboarded) && (
+                  <>
+                    <Link href="/saved" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--foreground)', textDecoration: 'none', fontWeight: '500', borderRadius: '8px', background: 'var(--surface)' }}>
                       Watchlist ❤️
                     </Link>
-                  )}
-                  
-                  {/* Owners can list PGs */}
-                  {(!isSuperAdmin && role === 'owner') && (
-                    hasProperties ? (
-                      <Link href="/owner/dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--foreground)', textDecoration: 'none', fontWeight: 'bold', borderRadius: '8px' }}>
-                        Check my PG
-                      </Link>
-                    ) : (
-                      <Link href="/owner/add" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', borderRadius: '8px', color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
-                        Create your PG
-                      </Link>
-                    )
-                  )}
 
-                  {/* Super Admin / Admin ONLY sees Admin Dashboard */}
-                  {(isSuperAdmin || role === 'admin') && (
-                    <Link href="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--primary)', textDecoration: 'none', fontWeight: 'bold', borderRadius: '8px' }}>
-                      Admin Dashboard ⚡
-                    </Link>
-                  )}
-                </>
-              )}
-              <UserButton />
-            </div>
+                    {(!isSuperAdmin && role === 'owner') && (
+                      hasProperties ? (
+                        <Link href="/owner/dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--foreground)', textDecoration: 'none', fontWeight: '500', borderRadius: '8px', background: 'var(--surface)' }}>
+                          Check my PG
+                        </Link>
+                      ) : (
+                        <Link href="/owner/add" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', borderRadius: '8px', color: 'white', textDecoration: 'none', fontWeight: '500' }}>
+                          Create your PG
+                        </Link>
+                      )
+                    )}
+
+                    {(isSuperAdmin || role === 'admin') && (
+                      <Link href="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--primary)', textDecoration: 'none', fontWeight: 'bold', borderRadius: '8px', background: 'var(--surface)' }}>
+                        Admin Dashboard
+                      </Link>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Divider */}
+              <div style={{ width: '1px', height: '24px', background: 'var(--surface-border)' }}></div>
+
+              {/* User Profile & Theme Group */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <ThemeToggle />
+                <span style={{ color: 'var(--text-muted)', fontSize: '14px', whiteSpace: 'nowrap' }}>
+                  Hello, <strong style={{ color: 'var(--foreground)' }}>{clerkUser?.firstName || email?.split('@')[0]}</strong>
+                </span>
+                <UserButton />
+              </div>
+            </>
           ) : (
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <ThemeToggle />
+              <div style={{ width: '1px', height: '24px', background: 'var(--surface-border)' }}></div>
               <SignInButton mode="modal">
-                <button style={{ height: '40px', padding: '0 20px', color: 'var(--foreground)', background: 'transparent', border: 'none', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer' }}>
+                <button style={{ height: '40px', padding: '0 20px', color: 'var(--foreground)', background: 'var(--surface)', border: '1px solid var(--surface-border)', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer' }}>
                   Login
                 </button>
               </SignInButton>

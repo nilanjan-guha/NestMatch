@@ -79,7 +79,22 @@ export default function AdminOwnerTable({ owners, properties }: { owners: any[],
               <React.Fragment key={ownerIdStr}>
                 <tr style={{ borderBottom: expandedOwner === ownerIdStr ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
                   <td style={{ padding: '10px' }}>
-                    <div style={{ fontWeight: 'bold' }}>{owner.name}</div>
+                    <div 
+                      style={{ fontWeight: 'bold', cursor: 'pointer', color: 'var(--primary)', textDecoration: 'underline' }}
+                      onClick={() => {
+                        const url = new URL(window.location.href);
+                        if (url.searchParams.get('ownerId') === ownerIdStr) {
+                          url.searchParams.delete('ownerId');
+                        } else {
+                          url.searchParams.set('ownerId', ownerIdStr);
+                        }
+                        url.hash = 'properties-table';
+                        router.push(url.pathname + url.search + url.hash);
+                      }}
+                      title="Click to filter All Listed Properties below"
+                    >
+                      {owner.name}
+                    </div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{owner.email}</div>
                   </td>
                   <td style={{ padding: '10px' }}>
