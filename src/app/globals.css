@@ -99,12 +99,7 @@ body {
   gap: 24px;
 }
 
-/* Push away effect when a card is hovered */
-.grid-auto-fit:has(.glow-effect:hover) .glow-effect:not(:hover) {
-  transform: scale(0.98);
-  opacity: 0.8;
-  filter: blur(2px);
-}
+/* Push away effect removed as per user request */
 
 /* Custom Scrollbar Styles */
 ::-webkit-scrollbar {
@@ -130,4 +125,193 @@ body {
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--surface-border) var(--background);
+}
+
+/* Hero Typography */
+.hero-section {
+  padding: 100px 24px;
+  text-align: center;
+  background: radial-gradient(circle at top, rgba(99,102,241,0.15) 0%, transparent 50%);
+}
+
+.hero-title {
+  font-size: 64px;
+  font-weight: 800;
+  margin-bottom: 20px;
+  line-height: 1.2;
+}
+
+.hero-subtitle {
+  font-size: 20px;
+  color: var(--text-muted);
+  margin-bottom: 50px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.search-input {
+  width: 100%;
+  padding: 20px 20px 20px 60px;
+  font-size: 18px;
+  border-radius: 15px;
+  border: 1px solid var(--surface-border);
+  background: transparent;
+  color: var(--foreground);
+  outline: none;
+}
+
+.search-textarea {
+  width: 100%;
+  padding: 20px;
+  font-size: 16px;
+  border-radius: 15px;
+  border: 1px solid var(--surface-border);
+  background: transparent;
+  color: var(--foreground);
+  outline: none;
+  resize: none;
+}
+
+/* ==========================================================
+   Responsive Utilities
+   ========================================================== */
+
+/* Mobile & Tablet view */
+@media (max-width: 768px) {
+  /* Reduce general text size on mobile */
+  body {
+    font-size: 14px;
+  }
+  
+  h1 { font-size: 24px !important; }
+  h2 { font-size: 20px !important; }
+  h3 { font-size: 18px !important; }
+  p { font-size: 14px !important; }
+
+  /* Containers */
+  .container {
+    padding: 0 16px;
+  }
+  
+  .hero-section {
+    padding: 60px 16px !important;
+  }
+  
+  .hero-title {
+    font-size: 36px !important;
+  }
+  
+  .hero-subtitle {
+    font-size: 16px !important;
+    margin-bottom: 30px !important;
+  }
+  
+  .search-input {
+    padding: 15px 15px 15px 45px !important;
+    font-size: 16px !important;
+  }
+  
+  .search-textarea {
+    padding: 15px !important;
+    font-size: 15px !important;
+  }
+  
+  /* Flex & Grid Overrides */
+  .stack-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  .grid-stack-mobile {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Visibility Toggles */
+  .hide-mobile {
+    display: none !important;
+  }
+  
+  .show-mobile-flex {
+    display: flex !important;
+  }
+  
+  .show-mobile-block {
+    display: block !important;
+  }
+  
+  /* Inputs & Buttons full width */
+  .full-width-mobile {
+    width: 100% !important;
+  }
+  
+  /* Padding Adjustments */
+  .padding-mobile {
+    padding: 20px 16px !important;
+  }
+  
+  /* Tables wrapper for overflow */
+  .table-responsive-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    margin-bottom: 20px;
+    border-radius: 8px;
+  }
+
+  /* CSS Checkbox Hack for Navbar */
+  .mobile-menu-btn {
+    display: block !important;
+    font-size: 24px;
+    background: none;
+    border: none;
+    color: var(--foreground);
+    cursor: pointer;
+    user-select: none;
+  }
+  
+  .mobile-menu-content {
+    display: none !important;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    background: var(--background);
+    padding: 20px;
+    border-bottom: 1px solid var(--surface-border);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    align-items: flex-start !important;
+  }
+  
+  #mobile-menu-toggle:checked ~ .mobile-menu-content {
+    display: flex !important;
+  }
+  
+  .mobile-menu-content .hide-mobile {
+    display: none !important;
+  }
+  /* Form panels padding */
+  .form-panel {
+    padding: 20px 16px !important;
+  }
+}
+
+/* Desktop Only Utilities */
+@media (min-width: 769px) {
+  .show-mobile-flex {
+    display: none !important;
+  }
+  .show-mobile-block {
+    display: none !important;
+  }
+  .mobile-menu-btn {
+    display: none !important;
+  }
+  #mobile-menu-toggle {
+    display: none !important;
+  }
+  .span-2-desktop {
+    grid-column: span 2;
+  }
 }

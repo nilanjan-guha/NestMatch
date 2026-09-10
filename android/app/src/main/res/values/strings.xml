@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NestMatch</string>
+    <string name="title_activity_main">NestMatch</string>
+    <string name="package_name">com.nestmatch.app</string>
+    <string name="custom_url_scheme">com.nestmatch.app</string>
+</resources>

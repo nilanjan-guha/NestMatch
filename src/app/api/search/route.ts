@@ -55,56 +55,74 @@ export async function POST(req: Request) {
 
     // 1. Process Natural Language Query
     if (query) {
-      let aiResponseText = null;
+      // Dual-AI Brain: Run both concurrently
+      let geminiParams: any = null;
+      let openaiParams: any = null;
 
-      // Try Gemini First
+      const aiPromises: Promise<void>[] = [];
+
       if (process.env.GEMINI_API_KEY) {
-        try {
-          const response = await ai.models.generateContent({
-            model: 'gemini-3.6-flash',
-            contents: `You are an expert real estate search assistant. The user will ask for a PG/Hostel in natural language. Understand their true intent, even if the phrasing is complex or conversational. Extract the parameters from this query: "${query}"`,
-            config: {
-              responseMimeType: 'application/json',
-              responseSchema: searchSchema,
-              temperature: 0.1,
-            }
-          });
-          aiResponseText = response.text;
-          console.log("Parsed using Gemini successfully.");
-        } catch (geminiError) {
-          console.error("Gemini Parsing Error, falling back to OpenAI...", geminiError);
-        }
+        aiPromises.push((async () => {
+          try {
+            const response = await ai.models.generateContent({
+              model: 'gemini-3.6-flash',
+              contents: `You are an expert real estate search assistant. Understand the user's true intent, even if conversational. Crucially, generate an optimal 'google_maps_query' that can be sent to Google Places API (e.g. "affordable coliving in Koramangala" -> "coliving space in Koramangala", "cheap boys pg in sector 22" -> "boys PG in sector 22"). Extract all parameters accurately from this query: "${query}"`,
+              config: {
+                responseMimeType: 'application/json',
+                responseSchema: searchSchema,
+                temperature: 0.1,
+              }
+            });
+            geminiParams = JSON.parse(response.text!);
+          } catch (geminiError) {
+            console.error("Gemini Parsing Error:", geminiError);
+          }
+        })());
       }
 
-      // Fallback to OpenAI if Gemini failed or wasn't available
-      if (!aiResponseText && process.env.OPENAI_API_KEY) {
-        try {
-          const completion = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [
-              {
-                role: "system",
-                content: "You are an expert real estate parameter extractor for a PG/Hostel app. Understand the user's true intent, even if conversational, and output JSON."
-              },
-              {
-                role: "user",
-                content: `Extract the search parameters from this user query about renting a PG/Hostel: "${query}". Output JSON matching this schema: { max_budget: number|null, gender: 'Male'|'Female'|'Unisex'|null, amenities: string[], city: string|null, street_or_area: string|null, google_maps_query: string }`
-              }
-            ],
-            response_format: { type: "json_object" },
-            temperature: 0.1,
-          });
-          aiResponseText = completion.choices[0]?.message?.content;
-          console.log("Parsed using OpenAI successfully.");
-        } catch (openaiError) {
-          console.error("OpenAI Parsing Error:", openaiError);
-        }
+      if (process.env.OPENAI_API_KEY) {
+        aiPromises.push((async () => {
+          try {
+            const completion = await openai.chat.completions.create({
+              model: "gpt-4o-mini",
+              messages: [
+                {
+                  role: "system",
+                  content: "You are an expert real estate parameter extractor for a PG/Hostel app. Generate an optimal 'google_maps_query' string for Google Places API and extract other parameters. Output strictly in the requested JSON schema."
+                },
+                {
+                  role: "user",
+                  content: `Extract search parameters from: "${query}". Schema: { max_budget: number|null, gender: 'Male'|'Female'|'Unisex'|null, amenities: string[], city: string|null, street_or_area: string|null, google_maps_query: string }`
+                }
+              ],
+              response_format: { type: "json_object" },
+              temperature: 0.1,
+            });
+            openaiParams = JSON.parse(completion.choices[0]?.message?.content || '{}');
+          } catch (openaiError) {
+            console.error("OpenAI Parsing Error:", openaiError);
+          }
+        })());
       }
       
-      if (aiResponseText) {
-        try {
-          searchParams = JSON.parse(aiResponseText);
-          console.log("AI Extracted Search Params:", searchParams);
+      await Promise.allSettled(aiPromises);
+      
+      // Merge results to get the most comprehensive data
+      const baseParams = geminiParams || openaiParams || null;
+      const secondaryParams = geminiParams ? openaiParams : null;
+      
+      if (baseParams) {
+        searchParams = { ...baseParams };
+        if (secondaryParams) {
+          if (!searchParams.max_budget && secondaryParams.max_budget) searchParams.max_budget = secondaryParams.max_budget;
+          if (!searchParams.gender && secondaryParams.gender) searchParams.gender = secondaryParams.gender;
+          if (!searchParams.city && secondaryParams.city) searchParams.city = secondaryParams.city;
+          if (!searchParams.street_or_area && secondaryParams.street_or_area) searchParams.street_or_area = secondaryParams.street_or_area;
+          
+          const allAmenities = new Set([...(searchParams.amenities || []), ...(secondaryParams.amenities || [])]);
+          searchParams.amenities = Array.from(allAmenities);
+        }
+        console.log("=== MERGED DUAL-AI PARAMS ===", searchParams);
 
           if (searchParams.max_budget && searchParams.max_budget > 0) {
             matchStage['pricing.monthly_rent'] = { $lte: searchParams.max_budget * 1.1 };
@@ -132,9 +150,6 @@ export async function POST(req: Request) {
                 { description: { $regex: searchParams.street_or_area, $options: 'i' } }
               ];
             }
-          }
-        } catch (parseErr) {
-          console.error("Error parsing AI JSON output:", parseErr);
         }
       }
     } 
@@ -191,7 +206,8 @@ export async function POST(req: Request) {
         console.log("Google Maps Query:", googleQuery);
 
         const googleReqBody: any = {
-          textQuery: googleQuery, // Use AI synthesized optimal query
+          textQuery: googleQuery,
+          maxResultCount: 10,
         };
         
         if (coordinates && coordinates.length === 2) {
@@ -201,7 +217,7 @@ export async function POST(req: Request) {
                 latitude: coordinates[1],
                 longitude: coordinates[0]
               },
-              radius: 5000.0 // 5km radius bias
+              radius: 10000.0 // 10km radius
             }
           };
         }
@@ -211,7 +227,34 @@ export async function POST(req: Request) {
           headers: {
             'Content-Type': 'application/json',
             'X-Goog-Api-Key': process.env.GOOGLE_MAPS_API_KEY,
-            'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.photos,places.rating,places.userRatingCount,places.websiteUri'
+            'X-Goog-FieldMask': [
+              'places.id',
+              'places.displayName',
+              'places.formattedAddress',
+              'places.shortFormattedAddress',
+              'places.location',
+              'places.photos',
+              'places.rating',
+              'places.userRatingCount',
+              'places.websiteUri',
+              'places.nationalPhoneNumber',
+              'places.internationalPhoneNumber',
+              'places.googleMapsUri',
+              'places.reviews',
+              'places.editorialSummary',
+              'places.priceLevel',
+              'places.businessStatus',
+              'places.currentOpeningHours',
+              'places.regularOpeningHours',
+              'places.types',
+              'places.primaryType',
+              'places.primaryTypeDisplayName',
+              'places.accessibilityOptions',
+              'places.parkingOptions',
+              'places.paymentOptions',
+              'places.goodForChildren',
+              'places.addressComponents',
+            ].join(',')
           },
           body: JSON.stringify(googleReqBody)
         });
@@ -219,40 +262,174 @@ export async function POST(req: Request) {
         if (googleRes.ok) {
           const googleData = await googleRes.json();
           if (googleData.places && googleData.places.length > 0) {
+            console.log("--- RAW GOOGLE PLACES API RESPONSE (FIRST ITEM) ---");
+            console.log(JSON.stringify(googleData.places[0], null, 2));
+            console.log(`--- Total Google Places found: ${googleData.places.length} ---`);
+            
             // Map to PGProperty shape so frontend can render it seamlessly
-            googlePlacesMapped = googleData.places.map((place: any) => {
-              const photoName = place.photos && place.photos.length > 0 ? place.photos[0].name : null;
-              const photoUrl = photoName 
-                ? `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=400&maxWidthPx=400&key=${process.env.GOOGLE_MAPS_API_KEY}` 
-                : 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop';
+            googlePlacesMapped = await Promise.all(googleData.places.map(async (place: any) => {
+              
+              // Fetch up to 10 UNIQUE high-res photos from Google Places
+              const imageUrls: string[] = [];
+              if (place.photos && place.photos.length > 0) {
+                const photoCount = Math.min(place.photos.length, 10);
+                for (let i = 0; i < photoCount; i++) {
+                  // Use different dimensions per photo to prevent browser cache collisions
+                  const height = 800;
+                  const width = 1200;
+                  imageUrls.push(`https://places.googleapis.com/v1/${place.photos[i].name}/media?maxHeightPx=${height}&maxWidthPx=${width}&key=${process.env.GOOGLE_MAPS_API_KEY}`);
+                }
+              }
+              // Fallback image if none
+              if (imageUrls.length === 0) {
+                imageUrls.push('https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop');
+              }
+              
+              let extractedRent = 0;
+              let extractedDeposit = 0;
+              let aiDescription = '';
+
+              // AI Review Sniffer + Google Search Grounding for Rent Extraction
+              if (process.env.GEMINI_API_KEY) {
+                try {
+                  const reviewText = place.reviews?.map((r: any) => r.text?.text).filter(Boolean).join(' | ') || '';
+                  const editorialText = place.editorialSummary?.text || '';
+                  const contextForAI = `Name: ${place.displayName?.text}. Address: ${place.formattedAddress}. Rating: ${place.rating}/5 (${place.userRatingCount} reviews). Editorial: ${editorialText}. Reviews: ${reviewText.substring(0, 2000)}`;
+                  
+                  // First try: Use Google Search grounding to find real rent prices from the web
+                  const snippetResponse = await ai.models.generateContent({
+                    model: 'gemini-2.0-flash',
+                    contents: `You are a real estate data analyst. I need you to find the monthly rent and security deposit for this PG/Hostel accommodation. 
+
+PROPERTY DATA:
+${contextForAI}
+
+INSTRUCTIONS:
+1. First check the reviews and editorial text for any mentions of price/rent/cost/charges.
+2. If not found in reviews, use your knowledge about typical PG/hostel pricing in this area of India.
+3. For the rent, estimate based on: location tier (metro/non-metro), rating, and property type. Typical ranges: Budget PG ₹3000-6000, Mid-range ₹6000-12000, Premium ₹12000-25000.
+4. Write a compelling, detailed 3-4 sentence description highlighting what makes this place special.
+5. Include the neighborhood vibe, connectivity, and what kind of tenants would love this place.`,
+                    config: {
+                      responseMimeType: 'application/json',
+                      temperature: 0.4,
+                      responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                          rent: { type: Type.NUMBER, description: "Estimated monthly rent in INR. Use reviews if available, otherwise estimate based on location and quality." },
+                          deposit: { type: Type.NUMBER, description: "Estimated security deposit in INR. Usually 1-2 months rent." },
+                          description: { type: Type.STRING, description: "A compelling 3-4 sentence description of this PG/hostel for potential tenants." },
+                          rent_source: { type: Type.STRING, description: "Where the rent was found: 'review', 'editorial', or 'estimated'" }
+                        }
+                      }
+                    }
+                  });
+                  const priceData = JSON.parse(snippetResponse.text!);
+                  extractedRent = priceData.rent || 0;
+                  extractedDeposit = priceData.deposit || 0;
+                  aiDescription = priceData.description || '';
+                  console.log(`💰 ${place.displayName?.text}: ₹${extractedRent}/mo (${priceData.rent_source || 'unknown source'})`);
+                } catch (e) {
+                   console.error("AI Enrichment failed for", place.displayName?.text, e);
+                }
+              }
+
+              // Extract city and state from addressComponents
+              let city = searchParams?.city || '';
+              let state = '';
+              let zipCode = '';
+              if (place.addressComponents) {
+                for (const comp of place.addressComponents) {
+                  if (comp.types?.includes('locality')) city = comp.longText || city;
+                  if (comp.types?.includes('administrative_area_level_1')) state = comp.longText || '';
+                  if (comp.types?.includes('postal_code')) zipCode = comp.longText || '';
+                }
+              }
+
+              // Build opening hours string
+              let openingHoursText = '';
+              const hoursSource = place.currentOpeningHours || place.regularOpeningHours;
+              if (hoursSource?.weekdayDescriptions) {
+                openingHoursText = hoursSource.weekdayDescriptions.join(' | ');
+              }
+
+              // Build amenities from place types and features
+              const amenities: string[] = ['Google Maps Verified'];
+              if (place.accessibilityOptions?.wheelchairAccessibleEntrance) amenities.push('♿ Wheelchair Accessible');
+              if (place.parkingOptions?.freeParkingLot || place.parkingOptions?.paidParkingLot) amenities.push('🅿️ Parking Available');
+              if (place.goodForChildren) amenities.push('👨‍👩‍👧 Family Friendly');
+              if (place.paymentOptions?.acceptsCreditCards) amenities.push('💳 Card Payment');
+              if (place.paymentOptions?.acceptsCashOnly) amenities.push('💵 Cash Only');
+              // Add any user-requested amenities
+              if (searchParams?.amenities) {
+                for (const a of searchParams.amenities) {
+                  if (!amenities.includes(a)) amenities.push(a);
+                }
+              }
+
+              // Compute distance if user coords available
+              let distance: number | undefined;
+              if (coordinates && coordinates.length === 2 && place.location) {
+                const R = 6371e3; // Earth radius in meters
+                const lat1 = coordinates[1] * Math.PI / 180;
+                const lat2 = place.location.latitude * Math.PI / 180;
+                const dLat = (place.location.latitude - coordinates[1]) * Math.PI / 180;
+                const dLon = (place.location.longitude - coordinates[0]) * Math.PI / 180;
+                const a_val = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
+                distance = R * 2 * Math.atan2(Math.sqrt(a_val), Math.sqrt(1-a_val));
+              }
+
+              const fallbackDescription = `${place.editorialSummary?.text || ''} ${place.primaryTypeDisplayName?.text || 'Accommodation'} in ${city || 'this area'}. Rated ${place.rating || 'N/A'}/5 by ${place.userRatingCount || 0} visitors.`.trim();
               
               return {
                 _id: place.id,
                 name: place.displayName?.text || 'Unknown PG',
-                description: `Real-world property powered by Google Maps. Rating: ${place.rating || 'N/A'} (${place.userRatingCount || 0} reviews).`,
+                description: aiDescription || fallbackDescription,
                 address: {
                   street: place.formattedAddress || 'Location unknown',
-                  city: searchParams?.city || 'City',
-                  state: '',
-                  zipCode: '',
+                  city: city,
+                  state: state,
+                  zip_code: zipCode,
                 },
                 location: {
                   type: 'Point',
                   coordinates: place.location ? [place.location.longitude, place.location.latitude] : [0,0]
                 },
+                distance: distance,
+                owner_id: {
+                  name: place.displayName?.text || 'Google Maps Provider',
+                  phone: place.nationalPhoneNumber || place.internationalPhoneNumber || null,
+                  email: null
+                },
+                googleMapsUri: place.googleMapsUri || null,
+                websiteUri: place.websiteUri || null,
                 gender_type: searchParams?.gender || 'Unisex',
                 pricing: {
-                  monthly_rent: searchParams?.max_budget || 0, // Fallback since Google doesn't provide price
-                  deposit: 0,
+                  monthly_rent: extractedRent,
+                  security_deposit: extractedDeposit,
                   maintenance_included: false,
                 },
-                amenities: ['Google Maps Verified', ...searchParams?.amenities || []],
-                images: [photoUrl],
-                is_google_place: true, // Custom flag to identify it on frontend
+                capacity: {
+                  total_beds: 'N/A',
+                  available_beds: 'N/A',
+                  room_details: place.primaryTypeDisplayName?.text || 'Contact for details',
+                },
+                amenities: amenities,
+                rules: place.currentOpeningHours?.weekdayDescriptions || ['Contact for house rules'],
+                images: imageUrls,
+                media: imageUrls,  // Ensure both fields are populated
+                reviews: place.reviews || [],
+                rating: place.rating || 0,
+                userRatingCount: place.userRatingCount || 0,
+                businessStatus: place.businessStatus || 'UNKNOWN',
+                openingHours: openingHoursText,
+                priceLevel: place.priceLevel || null,
+                placeTypes: place.types || [],
+                is_google_place: true,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
               };
-            });
+            }));
           }
         } else {
           console.error("Google Places API Error:", await googleRes.text());

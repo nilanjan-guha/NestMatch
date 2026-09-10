@@ -15,6 +15,29 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [currentQuery, setCurrentQuery] = useState('');
+  const [sortBy, setSortBy] = useState<string>('recommended');
+
+  // Compute sorted PGs
+  const getSortedPgs = () => {
+    let sorted = [...pgs];
+    if (sortBy === 'distance') {
+      sorted.sort((a, b) => {
+        const distA = a.distance ?? 999999;
+        const distB = b.distance ?? 999999;
+        return distA - distB;
+      });
+    } else if (sortBy === 'price_low_high') {
+      sorted.sort((a, b) => {
+        // Put "Contact for Price" (0 or null) at the end if sorting by low-high
+        const priceA = (a.pricing?.monthly_rent && a.pricing.monthly_rent > 0) ? a.pricing.monthly_rent : 999999;
+        const priceB = (b.pricing?.monthly_rent && b.pricing.monthly_rent > 0) ? b.pricing.monthly_rent : 999999;
+        return priceA - priceB;
+      });
+    }
+    return sorted;
+  };
+
+  const sortedPgs = getSortedPgs();
 
   // Fetch Session from Clerk user object
   useEffect(() => {
@@ -89,11 +112,11 @@ export default function Home() {
   return (
     <main>
       {/* Hero Section */}
-      <section style={{ padding: '100px 24px', textAlign: 'center', background: 'radial-gradient(circle at top, rgba(99,102,241,0.15) 0%, transparent 50%)' }}>
-        <h1 style={{ fontSize: '64px', fontWeight: '800', marginBottom: '20px', lineHeight: '1.2' }}>
+      <section className="hero-section">
+        <h1 className="hero-title">
           Find Your Perfect PG with <span style={{ background: 'linear-gradient(45deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>NestMatch</span>
         </h1>
-        <p style={{ fontSize: '20px', color: 'var(--text-muted)', marginBottom: '50px', maxWidth: '600px', margin: '0 auto 50px' }}>
+        <p className="hero-subtitle">
           Just tell us what you're looking for, and we will instantly find the best home for you.
         </p>
         
@@ -106,9 +129,48 @@ export default function Home() {
           <div style={{ textAlign: 'center', padding: '50px', color: 'var(--text-muted)' }}>Searching the database...</div>
         ) : pgs.length > 0 ? (
           <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+              <h2 style={{ fontSize: '20px' }}>Found {pgs.length} Properties</h2>
+              <div style={{
+                display: 'flex',
+                background: 'rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '12px',
+                padding: '4px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                overflowX: 'auto',
+                whiteSpace: 'nowrap'
+              }}>
+                {[
+                  { id: 'recommended', label: '✨ AI Recommended' },
+                  { id: 'distance', label: '📍 Nearest' },
+                  { id: 'price_low_high', label: '💰 Lowest Price' }
+                ].map(option => (
+                  <button
+                    key={option.id}
+                    onClick={() => setSortBy(option.id)}
+                    style={{
+                      background: sortBy === option.id ? 'linear-gradient(45deg, var(--primary), var(--secondary))' : 'transparent',
+                      color: sortBy === option.id ? '#fff' : 'var(--text-muted)',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: sortBy === option.id ? 'bold' : 'normal',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: sortBy === option.id ? '0 4px 15px rgba(0,0,0,0.2)' : 'none'
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
             <div className="grid-auto-fit">
-              {pgs.map((pg: any) => (
-                <PGCard key={pg._id} pg={pg} currentUserRole={userRole} />
+              {sortedPgs.map((pg: any, idx: number) => (
+                <PGCard key={pg._id || idx} pg={pg} currentUserRole={userRole} />
               ))}
             </div>
             {hasMore && (

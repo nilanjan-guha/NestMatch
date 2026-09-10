@@ -13,6 +13,8 @@ export default function OnboardingPage() {
   const [phone, setPhone] = useState('');
   const router = useRouter();
 
+  const [countryCode, setCountryCode] = useState('+91');
+
   useEffect(() => {
     if (user) {
       if (user.fullName || user.firstName) {
@@ -20,8 +22,10 @@ export default function OnboardingPage() {
       }
       if (user.primaryPhoneNumber?.phoneNumber) {
         let p = user.primaryPhoneNumber.phoneNumber;
-        if (p.startsWith('+91')) p = p.slice(3);
-        else if (p.startsWith('91')) p = p.slice(2);
+        if (p.startsWith('+91')) { p = p.slice(3); setCountryCode('+91'); }
+        else if (p.startsWith('91')) { p = p.slice(2); setCountryCode('+91'); }
+        else if (p.startsWith('+1')) { p = p.slice(2); setCountryCode('+1'); }
+        else if (p.startsWith('+44')) { p = p.slice(3); setCountryCode('+44'); }
         setPhone(p);
       }
     }
@@ -40,7 +44,7 @@ export default function OnboardingPage() {
 
     startTransition(async () => {
       try {
-        const fullPhone = `+91${phone}`;
+        const fullPhone = `${countryCode}${phone}`;
         await completeOnboarding(role, name, fullPhone);
         toast.success(`Welcome to NestMatch! You are now a ${role === 'owner' ? 'PG Owner' : 'PG Searcher'}.`);
         window.location.href = '/';
@@ -103,19 +107,24 @@ export default function OnboardingPage() {
         <div>
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Phone Number *</label>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '12px 16px',
-              borderRadius: '8px',
-              border: '1px solid var(--surface-border)',
-              background: 'var(--surface-hover)',
-              color: 'var(--text)',
-              fontSize: '16px',
-              userSelect: 'none'
-            }}>
-              🇮🇳 +91
-            </div>
+            <select
+              value={countryCode}
+              onChange={(e) => setCountryCode(e.target.value)}
+              style={{
+                padding: '12px',
+                borderRadius: '8px',
+                border: '1px solid var(--surface-border)',
+                background: 'var(--surface-hover)',
+                color: 'var(--text)',
+                fontSize: '16px',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="+91">🇮🇳 +91</option>
+              <option value="+1">🇺🇸 +1</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+61">🇦🇺 +61</option>
+            </select>
             <input 
               type="tel" 
               value={phone}

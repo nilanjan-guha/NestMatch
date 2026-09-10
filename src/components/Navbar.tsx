@@ -75,31 +75,38 @@ export default async function Navbar() {
         <Link href="/" style={{ fontSize: '24px', fontWeight: 'bold', textDecoration: 'none', color: 'var(--foreground)', display: 'flex', alignItems: 'center', gap: '10px' }}>
           NestMatch
         </Link>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+        
+        {/* Checkbox Hack for Mobile Menu */}
+        <input type="checkbox" id="mobile-menu-toggle" style={{ display: 'none' }} />
+        <label htmlFor="mobile-menu-toggle" className="mobile-menu-btn">
+          ☰
+        </label>
+
+        <div className="mobile-menu-content" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
           {userId ? (
             <>
               {/* Navigation Links Group */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="stack-mobile" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 {(isSuperAdmin || dbUser?.onboarded) && (
                   <>
-                    <Link href="/saved" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--foreground)', textDecoration: 'none', fontWeight: '500', borderRadius: '8px', background: 'var(--surface)' }}>
+                    <Link href="/saved" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--foreground)', textDecoration: 'none', fontWeight: '500', borderRadius: '8px', background: 'var(--surface)', width: '100%', whiteSpace: 'nowrap' }}>
                       Watchlist ❤️
                     </Link>
 
                     {(!isSuperAdmin && role === 'owner') && (
                       hasProperties ? (
-                        <Link href="/owner/dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--foreground)', textDecoration: 'none', fontWeight: '500', borderRadius: '8px', background: 'var(--surface)' }}>
+                        <Link href="/owner/dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--foreground)', textDecoration: 'none', fontWeight: '500', borderRadius: '8px', background: 'var(--surface)', width: '100%', whiteSpace: 'nowrap' }}>
                           Check my PG
                         </Link>
                       ) : (
-                        <Link href="/owner/add" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', borderRadius: '8px', color: 'white', textDecoration: 'none', fontWeight: '500' }}>
+                        <Link href="/owner/add" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', borderRadius: '8px', color: 'white', textDecoration: 'none', fontWeight: '500', width: '100%', whiteSpace: 'nowrap' }}>
                           Create your PG
                         </Link>
                       )
                     )}
 
                     {(isSuperAdmin || role === 'admin') && (
-                      <Link href="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--primary)', textDecoration: 'none', fontWeight: 'bold', borderRadius: '8px', background: 'var(--surface)' }}>
+                      <Link href="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--primary)', textDecoration: 'none', fontWeight: 'bold', borderRadius: '8px', background: 'var(--surface)', width: '100%', whiteSpace: 'nowrap' }}>
                         Admin Dashboard
                       </Link>
                     )}
@@ -108,10 +115,10 @@ export default async function Navbar() {
               </div>
 
               {/* Divider */}
-              <div style={{ width: '1px', height: '24px', background: 'var(--surface-border)' }}></div>
+              <div className="hide-mobile" style={{ width: '1px', height: '24px', background: 'var(--surface-border)' }}></div>
 
               {/* User Profile & Theme Group */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '10px 0' }}>
                 <ThemeToggle />
                 <span style={{ color: 'var(--text-muted)', fontSize: '14px', whiteSpace: 'nowrap' }}>
                   Hello, <strong style={{ color: 'var(--foreground)' }}>{clerkUser?.firstName || email?.split('@')[0]}</strong>
@@ -120,16 +127,16 @@ export default async function Navbar() {
               </div>
             </>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div className="stack-mobile" style={{ display: 'flex', alignItems: 'center', gap: '15px', width: '100%' }}>
               <ThemeToggle />
-              <div style={{ width: '1px', height: '24px', background: 'var(--surface-border)' }}></div>
+              <div className="hide-mobile" style={{ width: '1px', height: '24px', background: 'var(--surface-border)' }}></div>
               <SignInButton mode="modal">
-                <button style={{ height: '40px', padding: '0 20px', color: 'var(--foreground)', background: 'var(--surface)', border: '1px solid var(--surface-border)', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer' }}>
+                <button style={{ height: '40px', padding: '0 20px', color: 'var(--foreground)', background: 'var(--surface)', border: '1px solid var(--surface-border)', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', width: '100%' }}>
                   Login
                 </button>
               </SignInButton>
               <SignUpButton mode="modal" fallbackRedirectUrl="/onboarding">
-                <button style={{ height: '40px', padding: '0 20px', background: 'var(--primary)', color: 'white', border: 'none', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer' }}>
+                <button style={{ height: '40px', padding: '0 20px', background: 'var(--primary)', color: 'white', border: 'none', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', width: '100%' }}>
                   Register
                 </button>
               </SignUpButton>

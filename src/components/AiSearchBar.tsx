@@ -101,50 +101,16 @@ export default function AiSearchBar({ onSearch, defaultLocation }: { onSearch: (
     <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '700px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '15px' }}>
       
       {/* Step 1: Location Box */}
-      <div className="glow-effect" style={{ borderRadius: '15px', position: 'relative', background: 'var(--surface)' }}>
+      <div style={{ borderRadius: '15px', position: 'relative' }}>
         <input 
           type="text" 
           value={location}
           onChange={(e) => handleLocationChange(e.target.value)}
           onFocus={() => { if(suggestions.length > 0) setShowSuggestions(true); }}
-          placeholder="Where do you want to live? (e.g. Sector 18, Gurgaon)"
-          className="glass-panel"
-          style={{
-            width: '100%',
-            padding: '20px 60px',
-            fontSize: '18px',
-            borderRadius: '15px',
-            border: '1px solid var(--surface-border)',
-            background: 'transparent',
-            color: 'var(--foreground)',
-            outline: 'none'
-          }}
+          placeholder="Where do you want to live? (e.g. Sector 18)"
+          className="glass-panel search-input"
+          style={{ paddingLeft: '20px' }} // Remove large left padding since icon is gone
         />
-        <button
-          type="button"
-          onClick={handleGeoLocation}
-          title="Use my current location"
-          style={{
-            position: 'absolute',
-            left: '15px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            background: 'none',
-            border: 'none',
-            fontSize: '20px',
-            cursor: 'pointer',
-            color: loadingLoc ? 'var(--primary)' : 'var(--text-muted)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            transition: 'color 0.3s ease'
-          }}
-        >
-          📍
-        </button>
 
         {/* Autocomplete Dropdown */}
         {showSuggestions && suggestions.length > 0 && (
@@ -183,27 +149,42 @@ export default function AiSearchBar({ onSearch, defaultLocation }: { onSearch: (
         )}
       </div>
 
+      {/* Clear Use Current Location Button */}
+      <button
+        type="button"
+        onClick={handleGeoLocation}
+        disabled={loadingLoc}
+        style={{
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid var(--surface-border)',
+          color: 'var(--foreground)',
+          padding: '10px 16px',
+          borderRadius: '20px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          cursor: 'pointer',
+          alignSelf: 'flex-start',
+          fontSize: '14px',
+          transition: 'all 0.3s ease'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+        onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+      >
+        <span>📍</span>
+        {loadingLoc ? 'Finding location...' : 'Use My Current Location'}
+      </button>
+
       {/* Step 2: AI Requirements Box & Submit (Only shows if location is selected) */}
       {coords !== undefined && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', animation: 'fadeIn 0.5s ease' }}>
-          <div className="glow-effect" style={{ borderRadius: '15px', background: 'var(--surface)' }}>
+          <div style={{ borderRadius: '15px' }}>
             <textarea 
               value={requirements}
               onChange={(e) => setRequirements(e.target.value)}
               placeholder="Any specific requirements? (e.g. Cheap unisex PG under 5000 with AC and WiFi)"
-              className="glass-panel"
+              className="glass-panel search-textarea"
               rows={2}
-              style={{
-                width: '100%',
-                padding: '20px',
-                fontSize: '16px',
-                borderRadius: '15px',
-                border: '1px solid var(--surface-border)',
-                background: 'transparent',
-                color: 'var(--foreground)',
-                outline: 'none',
-                resize: 'none'
-              }}
             />
           </div>
 

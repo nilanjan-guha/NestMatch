@@ -102,12 +102,12 @@ export default function AddProperty() {
 
   return (
     <main className="container" style={{ padding: '40px 24px' }}>
-      <div style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-        <Link href="/owner/dashboard" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>← Back</Link>
-        <h1 style={{ fontSize: '32px' }}>Add New PG Property</h1>
+      <div style={{ marginBottom: '30px' }}>
+        <Link href="/owner/dashboard" style={{ color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-block', marginBottom: '10px' }}>← Back to Dashboard</Link>
+        <h1 style={{ fontSize: '32px', margin: 0 }}>Add New PG Property</h1>
       </div>
       
-      <div className="glass-panel" style={{ padding: '40px', maxWidth: '800px', margin: '0 auto' }}>
+      <div className="glass-panel form-panel" style={{ padding: '40px', maxWidth: '800px', margin: '0 auto' }}>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
           
           {/* Basic Details */}
@@ -128,8 +128,8 @@ export default function AddProperty() {
           {/* Location */}
           <div>
             <h3 style={{ marginBottom: '15px', color: 'var(--primary)' }}>Location</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              <input type="text" name="address.street" placeholder="Street Address" value={formData.address.street} onChange={handleChange} style={{...inputStyle, gridColumn: 'span 2'}} required />
+            <div className="grid-stack-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <input type="text" name="address.street" placeholder="Street Address" value={formData.address.street} onChange={handleChange} style={inputStyle} className="full-width-mobile span-2-desktop" required />
               <input type="text" name="address.city" placeholder="City" value={formData.address.city} onChange={handleChange} style={inputStyle} required />
               <input type="text" name="address.state" placeholder="State" value={formData.address.state} onChange={handleChange} style={inputStyle} required />
               <input type="text" name="address.zip_code" placeholder="Zip Code" value={formData.address.zip_code} onChange={handleChange} style={inputStyle} required />
@@ -139,13 +139,13 @@ export default function AddProperty() {
           {/* Pricing & Capacity */}
           <div>
             <h3 style={{ marginBottom: '15px', color: 'var(--primary)' }}>Pricing & Capacity</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+            <div className="grid-stack-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <input type="number" name="pricing.monthly_rent" placeholder="Monthly Rent (₹)" value={formData.pricing.monthly_rent} onChange={handleChange} style={inputStyle} required />
               <input type="number" name="pricing.security_deposit" placeholder="Security Deposit (₹)" value={formData.pricing.security_deposit} onChange={handleChange} style={inputStyle} required />
               
               <input type="number" name="capacity.total_beds" placeholder="Total Beds" value={formData.capacity.total_beds} onChange={handleChange} style={inputStyle} required />
               <input type="number" name="capacity.available_beds" placeholder="Available Beds" value={formData.capacity.available_beds} onChange={handleChange} style={inputStyle} required />
-              <input type="text" name="capacity.room_details" placeholder="Room/Bed Details (e.g., Room 204, Bed A)" value={formData.capacity.room_details} onChange={handleChange} style={{...inputStyle, gridColumn: 'span 2'}} />
+              <input type="text" name="capacity.room_details" placeholder="Room/Bed Details (e.g., Room 204, Bed A)" value={formData.capacity.room_details} onChange={handleChange} style={inputStyle} className="full-width-mobile span-2-desktop" />
             </div>
           </div>
 
