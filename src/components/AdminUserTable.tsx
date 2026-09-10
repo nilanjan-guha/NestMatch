@@ -2,17 +2,29 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
+import ConfirmModal from './ConfirmModal';
 
 export default function AdminUserTable({ users }: { users: any[] }) {
   const [loading, setLoading] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleDelete = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user? This will also delete all their associated properties, bookings, and saved properties. This action cannot be undone.')) {
-      return;
-    }
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [targetId, setTargetId] = useState<string | null>(null);
+
+  const requestDelete = (userId: string) => {
+    setTargetId(userId);
+    setModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!targetId) return;
+    const userId = targetId;
+    setModalOpen(false);
 
     setLoading(userId);
+    const loadingToast = toast.loading('Deleting user...');
     try {
       const res = await fetch(`/api/user/${userId}`, {
         method: 'DELETE',
@@ -20,17 +32,22 @@ export default function AdminUserTable({ users }: { users: any[] }) {
       const data = await res.json();
       
       if (res.ok) {
-        alert('User deleted successfully.');
+        toast.success('User deleted successfully.', { id: loadingToast });
         router.refresh();
       } else {
-        alert(data.error || 'Failed to delete user.');
+        toast.error(data.error || 'Failed to delete user.', { id: loadingToast });
       }
     } catch (error) {
       console.error(error);
-      alert('An error occurred.');
+      toast.error('An error occurred.', { id: loadingToast });
     } finally {
       setLoading(null);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setModalOpen(false);
+    setTargetId(null);
   };
 
   return (
@@ -60,7 +77,7 @@ export default function AdminUserTable({ users }: { users: any[] }) {
             </td>
             <td style={{ padding: '10px' }}>
               <button
-                onClick={() => handleDelete(u._id)}
+                onClick={() => requestDelete(u._id)}
                 disabled={loading === u._id}
                 style={{
                   padding: '6px 12px',
@@ -84,6 +101,13 @@ export default function AdminUserTable({ users }: { users: any[] }) {
           </tr>
         )}
       </tbody>
+      <ConfirmModal
+        isOpen={modalOpen}
+        title="Delete User"
+        message="Are you sure you want to delete this user? This will also delete all their associated properties, bookings, and saved properties. This action cannot be undone."
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </table>
   );
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@clerk/nextjs/server';
+import { User } from '@/models/User';
 import connectToDatabase from '@/utils/db';
 import { PGProperty } from '@/models/PGProperty';
 import { BookingInterest } from '@/models/BookingInterest';
@@ -8,7 +8,11 @@ import { SavedProperty } from '@/models/SavedProperty';
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
+    const { userId } = await auth();
+    let session = null;
+    if (userId) {
+      session = { user: await User.findOne({ clerkId: userId }) };
+    }
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -24,9 +28,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     // Only allow editing if the user is the owner or an admin
     const userRole = (session.user as any).role;
-    const userId = (session.user as any).id;
+    const sessionUserId = (session.user as any).id;
 
-    if (userRole !== 'admin' && property.owner_id.toString() !== userId) {
+    if (userRole !== 'admin' && property.owner_id.toString() !== sessionUserId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -47,7 +51,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
+    const { userId } = await auth();
+    let session = null;
+    if (userId) {
+      session = { user: await User.findOne({ clerkId: userId }) };
+    }
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -62,9 +70,9 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     // Only allow deletion if the user is the owner or an admin
     const userRole = (session.user as any).role;
-    const userId = (session.user as any).id;
+    const sessionUserId = (session.user as any).id;
 
-    if (userRole !== 'admin' && property.owner_id.toString() !== userId) {
+    if (userRole !== 'admin' && property.owner_id.toString() !== sessionUserId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

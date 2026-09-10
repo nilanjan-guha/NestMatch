@@ -1,17 +1,20 @@
 export const dynamic = 'force-dynamic';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@clerk/nextjs/server';
+import { User } from '@/models/User';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import connectToDatabase from '@/utils/db';
 import { PGProperty } from '@/models/PGProperty';
 import { BookingInterest } from '@/models/BookingInterest';
-import { User } from '@/models/User';
 import PropertyTable from '@/components/PropertyTable';
 import BookingStatusUpdater from '@/components/BookingStatusUpdater';
 
 export default async function OwnerDashboard() {
-  const session = await getServerSession(authOptions);
+  const { userId } = await auth();
+    let session = null;
+    if (userId) {
+      session = { user: await User.findOne({ clerkId: userId }) };
+    }
   
   if (!session || (session.user as any)?.role !== 'owner') {
     redirect('/login');

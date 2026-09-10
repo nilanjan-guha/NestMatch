@@ -1,5 +1,5 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@clerk/nextjs/server';
+import { User } from '@/models/User';
 import { redirect } from 'next/navigation';
 import connectToDatabase from '@/utils/db';
 import { SavedProperty } from '@/models/SavedProperty';
@@ -7,7 +7,11 @@ import WatchlistTable from '@/components/WatchlistTable';
 import { PGProperty } from '@/models/PGProperty'; // Ensure model is loaded
 
 export default async function SavedPropertiesPage() {
-  const session = await getServerSession(authOptions);
+  const { userId } = await auth();
+    let session = null;
+    if (userId) {
+      session = { user: await User.findOne({ clerkId: userId }) };
+    }
   
   if (!session || !session.user) {
     redirect('/login');

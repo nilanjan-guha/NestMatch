@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IUser extends Document {
+  clerkId?: string; // Add clerkId for Clerk integration
   name: string;
   email: string;
   password?: string;
@@ -13,9 +14,10 @@ export interface IUser extends Document {
 }
 
 const UserSchema: Schema = new Schema({
+  clerkId: { type: String, unique: true, sparse: true }, // Add clerkId
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: { type: String, required: false }, // Make password optional for Google logins
   phone: { type: String, required: false },
   location: { type: String, required: false },
   coordinates: { type: [Number], required: false }, // [longitude, latitude]

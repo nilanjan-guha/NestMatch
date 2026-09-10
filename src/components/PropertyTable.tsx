@@ -2,31 +2,52 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
+import ConfirmModal from './ConfirmModal';
 
 export default function PropertyTable({ properties }: { properties: any[] }) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [targetId, setTargetId] = useState<string | null>(null);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this listing? This action cannot be undone.')) return;
+  const requestDelete = (id: string) => {
+    setTargetId(id);
+    setModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!targetId) return;
+    const id = targetId;
+    setModalOpen(false);
     
     setLoadingId(id);
+    const loadingToast = toast.loading('Deleting listing...');
+    
     try {
       const res = await fetch(`/api/properties/${id}`, { method: 'DELETE' });
       const data = await res.json();
       
       if (data.success) {
+        toast.success('Listing deleted successfully', { id: loadingToast });
         // Force a hard refresh to re-run server side fetch and update navbar logic if this was the last property
         window.location.href = '/owner/dashboard';
       } else {
-        alert(data.error || 'Failed to delete');
+        toast.error(data.error || 'Failed to delete', { id: loadingToast });
         setLoadingId(null);
       }
     } catch (e) {
       console.error(e);
-      alert('An error occurred');
+      toast.error('An error occurred', { id: loadingToast });
       setLoadingId(null);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setModalOpen(false);
+    setTargetId(null);
   };
 
   return (
@@ -56,7 +77,7 @@ export default function PropertyTable({ properties }: { properties: any[] }) {
                   Edit
                 </button>
                 <button 
-                  onClick={() => handleDelete(pg._id.toString())} 
+                  onClick={() => requestDelete(pg._id.toString())} 
                   disabled={loadingId === pg._id.toString()}
                   style={{ padding: '6px 12px', background: 'rgba(255, 0, 0, 0.2)', border: '1px solid rgba(255, 0, 0, 0.4)', borderRadius: '4px', color: '#ff6b6b', cursor: loadingId === pg._id.toString() ? 'not-allowed' : 'pointer' }}
                 >
@@ -67,6 +88,14 @@ export default function PropertyTable({ properties }: { properties: any[] }) {
           ))}
         </tbody>
       </table>
+
+      <ConfirmModal
+        isOpen={modalOpen}
+        title="Delete Property"
+        message="Are you sure you want to delete this listing? This action cannot be undone."
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </div>
   );
 }

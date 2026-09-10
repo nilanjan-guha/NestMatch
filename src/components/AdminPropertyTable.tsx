@@ -1,30 +1,51 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'react-hot-toast';
+import ConfirmModal from './ConfirmModal';
 
 export default function AdminPropertyTable({ properties }: { properties: any[] }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
+  
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [targetId, setTargetId] = useState<string | null>(null);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('ADMIN OVERRIDE: Are you sure you want to delete this listing?')) return;
+  const requestDelete = (id: string) => {
+    setTargetId(id);
+    setModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!targetId) return;
+    const id = targetId;
+    setModalOpen(false);
     
     setLoadingId(id);
+    const loadingToast = toast.loading('Deleting listing...');
+    
     try {
       const res = await fetch(`/api/properties/${id}`, { method: 'DELETE' });
       const data = await res.json();
       
       if (data.success) {
+        toast.success('Listing deleted successfully', { id: loadingToast });
         window.location.reload();
       } else {
-        alert(data.error || 'Failed to delete');
+        toast.error(data.error || 'Failed to delete', { id: loadingToast });
         setLoadingId(null);
       }
     } catch (e) {
       console.error(e);
-      alert('An error occurred');
+      toast.error('An error occurred', { id: loadingToast });
       setLoadingId(null);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setModalOpen(false);
+    setTargetId(null);
   };
 
   return (
@@ -61,7 +82,7 @@ export default function AdminPropertyTable({ properties }: { properties: any[] }
                     View Details
                   </button>
                   <button 
-                    onClick={() => handleDelete(p._id.toString())} 
+                    onClick={() => requestDelete(p._id.toString())} 
                     disabled={loadingId === p._id.toString()}
                     style={{ padding: '6px 12px', background: 'rgba(255, 0, 0, 0.2)', border: '1px solid rgba(255, 0, 0, 0.4)', borderRadius: '4px', color: '#ff6b6b', cursor: loadingId === p._id.toString() ? 'not-allowed' : 'pointer', fontSize: '12px' }}
                   >
@@ -73,6 +94,14 @@ export default function AdminPropertyTable({ properties }: { properties: any[] }
           </tbody>
         </table>
       </div>
+
+      <ConfirmModal
+        isOpen={modalOpen}
+        title="Delete Listing (Admin Override)"
+        message="Are you sure you want to delete this listing? This action cannot be undone."
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
 
       {selectedProperty && (
         <div style={{

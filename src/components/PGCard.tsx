@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import MediaCarousel from './MediaCarousel';
+import { toast } from 'react-hot-toast';
 
 export default function PGCard({ pg, isOwnerView = false, currentUserRole = null }: { pg: any, isOwnerView?: boolean, currentUserRole?: string | null }) {
   const [saving, setSaving] = useState(false);
@@ -20,13 +21,13 @@ export default function PGCard({ pg, isOwnerView = false, currentUserRole = null
       const data = await res.json();
       if (data.success) {
         setIsSaved(data.saved);
-        // alert(data.saved ? 'Added to Watchlist ❤️' : 'Removed from Watchlist 💔');
+        toast.success(data.saved ? 'Added to Watchlist ❤️' : 'Removed from Watchlist 💔');
       } else {
-        alert(data.error || 'Failed to save property');
+        toast.error(data.error || 'Failed to save property');
       }
     } catch (e) {
       console.error(e);
-      alert('An error occurred');
+      toast.error('An error occurred');
     } finally {
       setSaving(false);
     }
@@ -35,6 +36,7 @@ export default function PGCard({ pg, isOwnerView = false, currentUserRole = null
   const handleBook = async (e: React.MouseEvent) => {
     e.stopPropagation(); // prevent modal opening
     setBooking(true);
+    const loadingToast = toast.loading('Registering interest...');
     try {
       const res = await fetch('/api/user/book', {
         method: 'POST',
@@ -43,13 +45,13 @@ export default function PGCard({ pg, isOwnerView = false, currentUserRole = null
       });
       const data = await res.json();
       if (data.success) {
-        alert('Interest registered! The owner has been notified. 📅');
+        toast.success('Interest registered! The owner has been notified. 📅', { id: loadingToast });
       } else {
-        alert(data.error || 'Failed to register interest');
+        toast.error(data.error || 'Failed to register interest', { id: loadingToast });
       }
     } catch (e) {
       console.error(e);
-      alert('An error occurred');
+      toast.error('An error occurred', { id: loadingToast });
     } finally {
       setBooking(false);
     }

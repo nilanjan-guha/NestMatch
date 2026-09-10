@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@clerk/nextjs/server';
+import { User } from '@/models/User';
 import connectToDatabase from '@/utils/db';
 import { BookingInterest } from '@/models/BookingInterest';
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
+    const { userId } = await auth();
+    let session = null;
+    if (userId) {
+      session = { user: await User.findOne({ clerkId: userId }) };
+    }
     if (!session || (session.user as any).role !== 'owner') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

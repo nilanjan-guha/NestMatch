@@ -1,9 +1,8 @@
 export const dynamic = 'force-dynamic';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@clerk/nextjs/server';
+import { User } from '@/models/User';
 import { redirect } from 'next/navigation';
 import connectToDatabase from '@/utils/db';
-import { User } from '@/models/User';
 import { PGProperty } from '@/models/PGProperty';
 import { BookingInterest } from '@/models/BookingInterest';
 import Link from 'next/link';
@@ -12,7 +11,11 @@ import AdminUserTable from '@/components/AdminUserTable';
 import AdminOwnerTable from '@/components/AdminOwnerTable';
 
 export default async function AdminDashboard() {
-  const session = await getServerSession(authOptions);
+  const { userId } = await auth();
+    let session = null;
+    if (userId) {
+      session = { user: await User.findOne({ clerkId: userId }) };
+    }
   
   if (!session || (session.user as any)?.role !== 'admin') {
     redirect('/'); // Only admins allowed

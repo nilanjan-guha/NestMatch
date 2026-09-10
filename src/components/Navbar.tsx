@@ -1,12 +1,17 @@
 import Link from 'next/link';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@clerk/nextjs/server';
+import { UserButton } from '@clerk/nextjs';
+import { User } from '@/models/User';
 import ThemeToggle from './ThemeToggle';
 import connectToDatabase from '@/utils/db';
 import { PGProperty } from '@/models/PGProperty';
 
 export default async function Navbar() {
-  const session = await getServerSession(authOptions);
+  const { userId } = await auth();
+    let session = null;
+    if (userId) {
+      session = { user: await User.findOne({ clerkId: userId }) };
+    }
 
   let hasProperties = false;
   if (session && (session.user as any)?.role === 'owner') {
@@ -49,9 +54,7 @@ export default async function Navbar() {
                   Admin Dashboard ⚡
                 </Link>
               )}
-              <Link href="/api/auth/signout" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', background: 'var(--surface)', borderRadius: '8px', color: 'var(--foreground)', textDecoration: 'none', border: '1px solid var(--surface-border)', fontSize: '14px', fontWeight: '500' }}>
-                Logout
-              </Link>
+              <UserButton />
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>

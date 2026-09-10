@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import connectToDatabase from '@/utils/db';
+import { auth } from '@clerk/nextjs/server';
 import { User } from '@/models/User';
+import connectToDatabase from '@/utils/db';
 import { PGProperty } from '@/models/PGProperty';
 import { BookingInterest } from '@/models/BookingInterest';
 import { SavedProperty } from '@/models/SavedProperty';
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
+    const { userId } = await auth();
+    let session = null;
+    if (userId) {
+      session = { user: await User.findOne({ clerkId: userId }) };
+    }
     if (!session || (session.user as any).role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
