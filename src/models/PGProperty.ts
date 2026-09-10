@@ -19,6 +19,11 @@ export interface IPGProperty extends Document {
   amenities: string[];
   rules: string[];
   media: string[];
+  capacity: {
+    total_beds: number;
+    available_beds: number;
+    room_details: string;
+  };
   rating: number;
   createdAt: Date;
   updatedAt: Date;
@@ -51,6 +56,11 @@ const PGPropertySchema: Schema = new Schema({
   amenities: [{ type: String }],
   rules: [{ type: String }],
   media: [{ type: String }],
+  capacity: {
+    total_beds: { type: Number, default: 0 },
+    available_beds: { type: Number, default: 0 },
+    room_details: { type: String, default: '' }
+  },
   rating: { type: Number, default: 0 }
 }, {
   timestamps: true

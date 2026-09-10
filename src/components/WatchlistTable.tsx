@@ -135,9 +135,16 @@ export default function WatchlistTable({ properties }: { properties: any[] }) {
                   <span>📋</span> Details
                 </h4>
                 <div style={{ fontSize: '14px' }}>
-                  <div style={{ marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Total Beds:</span> {selectedProperty.capacity?.total_beds}</div>
-                  <div style={{ marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Available:</span> <strong style={{ color: '#4ade80' }}>{selectedProperty.capacity?.available_beds}</strong></div>
-                  <div><span style={{ color: 'var(--text-muted)' }}>Owner ID:</span> {selectedProperty.owner_id?.toString()?.substring(0, 8)}...</div>
+                  <div style={{ marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Total Beds:</span> {selectedProperty.capacity?.total_beds || 'N/A'}</div>
+                  <div style={{ marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Available:</span> <strong style={{ color: '#4ade80' }}>{selectedProperty.capacity?.available_beds || 'N/A'}</strong></div>
+                  <div style={{ marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Room Details:</span> {selectedProperty.capacity?.room_details || 'N/A'}</div>
+                  
+                  <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>Owner Details:</span> 
+                    <strong>{selectedProperty.owner_id?.name || 'Unknown'}</strong>
+                    {selectedProperty.owner_id?.email && <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>📧 {selectedProperty.owner_id.email}</div>}
+                    {selectedProperty.owner_id?.phone && <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>📞 {selectedProperty.owner_id.phone}</div>}
+                  </div>
                 </div>
               </div>
 

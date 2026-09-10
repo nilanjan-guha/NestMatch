@@ -175,6 +175,26 @@ export default function PGCard({ pg, isOwnerView = false, currentUserRole = null
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
+                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '12px' }}>
+                  <h3 style={{ fontSize: '20px', marginBottom: '15px', color: 'var(--primary)' }}>Accommodation Details</h3>
+                  <div style={{ fontSize: '15px', color: 'var(--text-muted)' }}>
+                    <div style={{ marginBottom: '8px' }}><strong>Total Beds:</strong> {pg.capacity?.total_beds || 'N/A'}</div>
+                    <div style={{ marginBottom: '8px' }}><strong>Available Beds:</strong> <span style={{ color: '#4ade80' }}>{pg.capacity?.available_beds || 'N/A'}</span></div>
+                    <div><strong>Room Details:</strong> {pg.capacity?.room_details || 'N/A'}</div>
+                  </div>
+                </div>
+
+                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '12px' }}>
+                  <h3 style={{ fontSize: '20px', marginBottom: '15px', color: 'var(--primary)' }}>Owner Details</h3>
+                  <div style={{ fontSize: '15px', color: 'var(--text-muted)' }}>
+                    <div style={{ marginBottom: '8px' }}><strong>Name:</strong> {pg.owner_id?.name || 'Unknown'}</div>
+                    {pg.owner_id?.email && <div style={{ marginBottom: '8px' }}><strong>Email:</strong> <a href={`mailto:${pg.owner_id.email}`} style={{ color: 'var(--secondary)', textDecoration: 'none' }}>{pg.owner_id.email}</a></div>}
+                    {pg.owner_id?.phone && <div><strong>Phone:</strong> {pg.owner_id.phone}</div>}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
                 <div>
                   <h3 style={{ fontSize: '20px', marginBottom: '15px', color: 'var(--primary)' }}>Amenities</h3>
                   <ul style={{ listStyleType: 'none', padding: 0 }}>

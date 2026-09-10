@@ -12,6 +12,7 @@ export default function AddProperty() {
     address: { street: '', city: '', state: '', zip_code: '' },
     gender_type: 'Unisex',
     pricing: { monthly_rent: '', security_deposit: '' },
+    capacity: { total_beds: '', available_beds: '', room_details: '' },
     amenities: '',
     rules: '',
     media: ''
@@ -40,6 +41,11 @@ export default function AddProperty() {
       pricing: {
         monthly_rent: Number(formData.pricing.monthly_rent),
         security_deposit: Number(formData.pricing.security_deposit)
+      },
+      capacity: {
+        total_beds: Number(formData.capacity.total_beds),
+        available_beds: Number(formData.capacity.available_beds),
+        room_details: formData.capacity.room_details
       },
       address: {
         ...formData.address,
@@ -130,12 +136,16 @@ export default function AddProperty() {
             </div>
           </div>
 
-          {/* Pricing */}
+          {/* Pricing & Capacity */}
           <div>
-            <h3 style={{ marginBottom: '15px', color: 'var(--primary)' }}>Pricing (Monthly)</h3>
+            <h3 style={{ marginBottom: '15px', color: 'var(--primary)' }}>Pricing & Capacity</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <input type="number" name="pricing.monthly_rent" placeholder="Monthly Rent (₹)" value={formData.pricing.monthly_rent} onChange={handleChange} style={inputStyle} required />
               <input type="number" name="pricing.security_deposit" placeholder="Security Deposit (₹)" value={formData.pricing.security_deposit} onChange={handleChange} style={inputStyle} required />
+              
+              <input type="number" name="capacity.total_beds" placeholder="Total Beds" value={formData.capacity.total_beds} onChange={handleChange} style={inputStyle} required />
+              <input type="number" name="capacity.available_beds" placeholder="Available Beds" value={formData.capacity.available_beds} onChange={handleChange} style={inputStyle} required />
+              <input type="text" name="capacity.room_details" placeholder="Room/Bed Details (e.g., Room 204, Bed A)" value={formData.capacity.room_details} onChange={handleChange} style={{...inputStyle, gridColumn: 'span 2'}} />
             </div>
           </div>
 

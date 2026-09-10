@@ -21,7 +21,9 @@ export default async function OwnerDashboard() {
   }
 
   await connectToDatabase();
-  const properties = await PGProperty.find({ owner_id: (session.user as any).id }).sort({ createdAt: -1 });
+  const properties = await PGProperty.find({ owner_id: (session.user as any).id })
+    .populate('owner_id', 'name email phone')
+    .sort({ createdAt: -1 });
 
   // Ensure models are registered for population
   User.schema;

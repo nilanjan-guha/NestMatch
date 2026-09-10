@@ -28,7 +28,10 @@ export default function ConfirmModal({ isOpen, title, message, onConfirm, onCanc
         borderRadius: '12px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '20px'
+        gap: '20px',
+        background: 'var(--background)', // Added solid background
+        border: '1px solid var(--surface-border)',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
       }}>
         <h3 style={{ margin: 0, fontSize: '24px' }}>{title}</h3>
         <p style={{ margin: 0, color: 'var(--text-muted)' }}>{message}</p>
