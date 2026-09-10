@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { User } from '@/models/User';
 import connectToDatabase from '@/utils/db';
 import { PGProperty } from '@/models/PGProperty';
@@ -29,8 +29,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     // Only allow editing if the user is the owner or an admin
     const userRole = (session.user as any).role;
     const sessionUserId = (session.user as any).id;
+    
+    const clerkUser = await currentUser();
+    const email = clerkUser?.emailAddresses[0]?.emailAddress;
+    const phone = clerkUser?.phoneNumbers?.[0]?.phoneNumber;
+    const isSuperAdmin = (email && email === process.env.ADMIN_EMAIL) || (phone && phone === process.env.ADMIN_PHONE);
 
-    if (userRole !== 'admin' && property.owner_id.toString() !== sessionUserId) {
+    if (!isSuperAdmin && userRole !== 'admin' && property.owner_id.toString() !== sessionUserId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -71,8 +76,13 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     // Only allow deletion if the user is the owner or an admin
     const userRole = (session.user as any).role;
     const sessionUserId = (session.user as any).id;
+    
+    const clerkUser = await currentUser();
+    const email = clerkUser?.emailAddresses[0]?.emailAddress;
+    const phone = clerkUser?.phoneNumbers?.[0]?.phoneNumber;
+    const isSuperAdmin = (email && email === process.env.ADMIN_EMAIL) || (phone && phone === process.env.ADMIN_PHONE);
 
-    if (userRole !== 'admin' && property.owner_id.toString() !== sessionUserId) {
+    if (!isSuperAdmin && userRole !== 'admin' && property.owner_id.toString() !== sessionUserId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

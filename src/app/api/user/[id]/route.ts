@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser, clerkClient } from '@clerk/nextjs/server';
 import { User } from '@/models/User';
 import connectToDatabase from '@/utils/db';
 import { PGProperty } from '@/models/PGProperty';
@@ -9,11 +9,18 @@ import { SavedProperty } from '@/models/SavedProperty';
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth();
+    const clerkUser = await currentUser();
+    const email = clerkUser?.emailAddresses[0]?.emailAddress;
+    const phone = clerkUser?.phoneNumbers?.[0]?.phoneNumber;
+    const isSuperAdmin = (email && email === process.env.ADMIN_EMAIL) || (phone && phone === process.env.ADMIN_PHONE);
+
     let session = null;
     if (userId) {
       session = { user: await User.findOne({ clerkId: userId }) };
     }
-    if (!session || (session.user as any).role !== 'admin') {
+    
+    // Check if the user is a super admin OR a database admin
+    if (!isSuperAdmin && (!session || (session.user as any).role !== 'admin')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -25,7 +32,17 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Delete the user
+    // Completely delete the user from Clerk so they are forced to register again!
+    if (user.clerkId) {
+      try {
+        const client = await clerkClient();
+        await client.users.deleteUser(user.clerkId);
+      } catch (clerkError) {
+        console.error("Failed to delete from Clerk (they may already be deleted):", clerkError);
+      }
+    }
+
+    // Delete the user from MongoDB
     await User.findByIdAndDelete(id);
 
     // If user is a searcher, delete their bookings and saved properties

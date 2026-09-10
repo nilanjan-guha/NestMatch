@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { User } from '@/models/User';
 import { redirect } from 'next/navigation';
 import connectToDatabase from '@/utils/db';
@@ -12,13 +12,20 @@ import AdminOwnerTable from '@/components/AdminOwnerTable';
 
 export default async function AdminDashboard() {
   const { userId } = await auth();
-    let session = null;
-    if (userId) {
-      session = { user: await User.findOne({ clerkId: userId }) };
-    }
+  const clerkUser = await currentUser();
+  const email = clerkUser?.emailAddresses[0]?.emailAddress;
+  const phone = clerkUser?.phoneNumbers?.[0]?.phoneNumber;
+  const isSuperAdmin = (email && email === process.env.ADMIN_EMAIL) || (phone && phone === process.env.ADMIN_PHONE);
+
+  let session = null;
+  if (userId) {
+    await connectToDatabase();
+    session = { user: await User.findOne({ clerkId: userId }) };
+  }
   
-  if (!session || (session.user as any)?.role !== 'admin') {
-    redirect('/'); // Only admins allowed
+  // If they are not Super Admin AND not a regular admin in the DB, kick them out
+  if (!isSuperAdmin && (!session || (session.user as any)?.role !== 'admin')) {
+    redirect('/'); 
   }
 
   await connectToDatabase();

@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   description: "Find the perfect PG tailored to your needs.",
 };
 
+import Script from 'next/script';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,6 +30,15 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+        <head>
+          {/* Google AdSense Integration */}
+          <Script
+            async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1589107667014849"
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        </head>
         <body suppressHydrationWarning>
           <Toaster position="bottom-right" />
           <Navbar />
