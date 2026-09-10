@@ -32,12 +32,11 @@ export default function RootLayout({
       <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <head>
           {/* Google AdSense Integration */}
-          <Script
+          <script
             async
             src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1589107667014849"
             crossOrigin="anonymous"
-            strategy="afterInteractive"
-          />
+          ></script>
         </head>
         <body suppressHydrationWarning>
           <Toaster position="bottom-right" />
