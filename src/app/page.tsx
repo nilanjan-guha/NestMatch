@@ -1,69 +1,143 @@
-import Image from "next/image";
+'use client';
+import { useState, useEffect } from 'react';
+import AiSearchBar from '@/components/AiSearchBar';
+import PGCard from '@/components/PGCard';
 
 export default function Home() {
+  const [pgs, setPgs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<string>('');
+  const [userCoords, setUserCoords] = useState<[number, number] | undefined>(undefined);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [currentQuery, setCurrentQuery] = useState('');
+
+  // Fetch initial PGs and Session
+  useEffect(() => {
+    fetch('/api/auth/session')
+      .then(res => res.json())
+      .then(session => {
+        if (session && session.user) {
+          setUserRole(session.user.role);
+          if (session.user.location) {
+            setUserLocation(session.user.location);
+          }
+          if (session.user.coordinates) {
+            setUserCoords(session.user.coordinates);
+          }
+        }
+      })
+      .catch(console.error);
+
+    fetch('/api/properties')
+      .then(res => res.json())
+      .then(data => {
+        setPgs(data.data || []);
+        setHasMore((data.data || []).length === 10);
+        setLoading(false);
+      });
+  }, []);
+
+  const handleSearch = async (query: string, coordinates?: [number, number]) => {
+    setLoading(true);
+    setCurrentQuery(query);
+    if (coordinates) setUserCoords(coordinates);
+    setPage(1);
+    
+    try {
+      const res = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, coordinates: coordinates || userCoords, page: 1, limit: 10 })
+      });
+      const data = await res.json();
+      setPgs(data.data || []);
+      setHasMore((data.data || []).length === 10);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    setPage(nextPage);
+    try {
+      const res = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: currentQuery, coordinates: userCoords, page: nextPage, limit: 10 })
+      });
+      const data = await res.json();
+      if (data.data && data.data.length > 0) {
+        setPgs(prev => [...prev, ...data.data]);
+        setHasMore(data.data.length === 10);
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main>
+      {/* Hero Section */}
+      <section style={{ padding: '100px 24px', textAlign: 'center', background: 'radial-gradient(circle at top, rgba(99,102,241,0.15) 0%, transparent 50%)' }}>
+        <h1 style={{ fontSize: '64px', fontWeight: '800', marginBottom: '20px', lineHeight: '1.2' }}>
+          Find Your Perfect PG with <span style={{ background: 'linear-gradient(45deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>NestMatch</span>
+        </h1>
+        <p style={{ fontSize: '20px', color: 'var(--text-muted)', marginBottom: '50px', maxWidth: '600px', margin: '0 auto 50px' }}>
+          Just tell us what you're looking for, and we will instantly find the best home for you.
+        </p>
+        
+        <AiSearchBar onSearch={handleSearch} defaultLocation={userLocation} />
+      </section>
+
+      {/* Results Section */}
+      <section className="container" style={{ paddingBottom: '100px' }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '50px', color: 'var(--text-muted)' }}>Searching the database...</div>
+        ) : pgs.length > 0 ? (
+          <>
+            <div className="grid-auto-fit">
+              {pgs.map((pg: any) => (
+                <PGCard key={pg._id} pg={pg} currentUserRole={userRole} />
+              ))}
+            </div>
+            {hasMore && (
+              <div style={{ textAlign: 'center', marginTop: '40px' }}>
+                <button 
+                  onClick={loadMore} 
+                  disabled={loadingMore}
+                  style={{
+                    padding: '12px 32px',
+                    borderRadius: '8px',
+                    background: 'var(--surface)',
+                    border: '1px solid var(--surface-border)',
+                    color: 'var(--foreground)',
+                    cursor: loadingMore ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '16px'
+                  }}
+                >
+                  {loadingMore ? 'Loading...' : 'Load More'}
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '50px', color: 'var(--text-muted)' }}>
+            No PGs found matching your search.
+          </div>
+        )}
+      </section>
+    </main>
   );
 }

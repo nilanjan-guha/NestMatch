@@ -1,69 +1,97 @@
-# VibeMatch AI - Project Roadmap & Implementation Plan
+# VibeMatch AI - Enterprise Project Roadmap
 
-Welcome to the start of VibeMatch AI! This document outlines our step-by-step strategy for building this AI-powered Two-Sided Marketplace.
-
-## 💰 The 100% Free Tech Stack Strategy
-Per your request, we will use a tech stack where development, hosting, databases, and version control are **completely free**.
-
-*   **Frontend & Backend (All-in-One): Next.js (React)**
-    *   *Why:* Next.js allows us to write both our beautiful frontend UI and our backend API routes in the same project. 
-    *   *Cost:* Free.
-*   **Database: MongoDB Atlas (M0 Free Tier)**
-    *   *Why:* It provides a completely free, cloud-hosted NoSQL database (512MB storage, plenty for starting out). It handles complex data like AI preferences and GPS coordinates easily.
-    *   *Cost:* Free forever tier (no credit card required).
-*   **Hosting: Vercel**
-    *   *Why:* Vercel is the creator of Next.js. They will host our frontend and backend APIs on their global edge network.
-    *   *Cost:* Generous free tier for hobbyists/individual developers.
-*   **Version Control (Git): GitHub**
-    *   *Why:* Industry standard for code storage.
-    *   *Cost:* Free for unlimited private and public repositories.
-*   **AI Integration: Google Gemini API (via Marvin AI / LangChain)**
-    *   *Why:* Gemini offers a robust free tier for developers to do natural language matching.
+This is the detailed, industry-standard implementation plan. It is structured for an enterprise-level application that will scale to thousands of users, support a web application, and eventually support mobile apps on the Google Play Store and Apple App Store.
 
 ---
 
-## 🗺️ Master Roadmap
+## 🏗️ Master Architecture (Web + Mobile Ready)
 
-- **Phase 1: Database Schema & Setup (Current Step)**
-  - Finalize data structure.
-  - Set up local Next.js project.
-  - Connect to free MongoDB Atlas.
-- **Phase 2: Backend API & AI Integration**
-  - Build API routes in Next.js.
-  - Integrate AI for natural language parsing and matching.
-- **Phase 3: Owner Portal (B2B)**
-  - Build the dashboard for PG owners to register and manage properties.
-- **Phase 4: Searcher Portal (B2C)**
-  - Build the beautiful, user-facing website with AI chat search and maps.
-- **Phase 5: Deployment**
-  - Push code to GitHub and automatically deploy to Vercel for free.
+To support both a Web App and a Mobile App in the future, we must use an **API-First (Headless) Architecture**.
+
+*   **The Backend (The Brain):** We are building a standalone REST API in Next.js. This API will handle the database, Marvin AI logic, authentication, and payments.
+*   **The Web Frontend (The Website):** Built within Next.js, it will "talk" to our Backend API.
+*   **The Mobile Frontend (Future):** When you are ready for the Play Store/App Store, you will build a React Native or Flutter app. This mobile app will simply plug into the exact same Backend API we are building right now.
 
 ---
 
-## 🗄️ Phase 1: Database Schema
+## 📂 Enterprise Folder Structure
 
-Using **MongoDB**, our data will be stored as flexible JSON documents.
+We will use a highly organized, industry-standard folder structure inside our Next.js `src` directory to keep business logic completely separate from UI logic:
 
-### 1. `PG_Property` (The Core Entity)
-*   `_id`: Unique identifier
-*   `owner_id`: Reference to the Owner
-*   `name`: String (e.g., "Sunrise PG for Men")
-*   `description`: Text
-*   `address`: Object `{ street, city, state, zip_code, coordinates: [lng, lat] }`
-*   `gender_type`: String ("Male", "Female", "Unisex")
-*   `pricing`: Object `{ monthly_rent, security_deposit }`
-*   `amenities`: Array of Strings `["WiFi", "AC", "Food Included"]`
-*   `rules`: Array of Strings `["Night Curfew", "Veg Only"]`
-*   `media`: Array of URLs (Photos/Videos)
+*   `src/app/` ➔ Next.js Pages and API Routes (Endpoints)
+*   `src/models/` ➔ Mongoose Database Schemas (PG, Owner, User)
+*   `src/services/` ➔ Core Business Logic (AI Matching, Database Queries)
+*   `src/controllers/` ➔ API Request Handlers
+*   `src/middlewares/` ➔ Authentication & Security rules
+*   `src/utils/` ➔ Helper functions (Date formatting, validators)
+*   `src/components/` ➔ Reusable UI elements (Buttons, Cards, Modals)
 
-### 2. `Owner` (B2B User)
-*   `_id`: Unique identifier
-*   `name`: String
-*   `email`: String
-*   `phone`: String
+---
 
-### 3. `Searcher` (B2C User)
-*   `_id`: Unique identifier
-*   `name`: String
-*   `email`: String
-*   `preferences`: String (Their saved AI search prompt)
+## 🗺️ Highly Detailed Execution Roadmap
+
+### Phase 1: Database & Enterprise Foundation (Current)
+*   [ ] Configure MongoDB Atlas for cloud database hosting.
+*   [ ] Establish the enterprise folder structure (models, services, controllers).
+*   [ ] Create Mongoose Schemas with strict validation:
+    *   `PG_Property` Model
+    *   `Owner` Model
+    *   `Searcher` Model
+*   [ ] Build global database connection utility.
+
+### Phase 2: Core API Development
+*   [ ] Build B2B Endpoints (Owners):
+    *   `POST /api/owner/register`
+    *   `POST /api/pg/create`
+    *   `PUT /api/pg/update`
+*   [ ] Build B2C Endpoints (Searchers):
+    *   `GET /api/pg/search` (Standard filter search)
+    *   `GET /api/pg/:id` (View single PG details)
+
+### Phase 3: AI Engine Integration ("VibeMatch")
+*   [ ] Integrate Google Gemini API / Marvin AI.
+*   [ ] Build the Natural Language Parsing Service:
+    *   Extract Budget, Location, Rules, and Amenities from a user's plain english paragraph.
+*   [ ] Build the AI Matching Service:
+    *   Query the MongoDB database using the extracted AI parameters to find the top 3 best matches.
+*   [ ] Expose `POST /api/ai/match` endpoint.
+
+### Phase 4: B2B Owner Portal (Frontend)
+*   [ ] Build secure Owner Authentication (Login/Register).
+*   [ ] Build Owner Dashboard UI.
+*   [ ] Build forms for Owners to upload PG details, rules, and photos.
+*   [ ] Connect Frontend forms to Backend APIs.
+
+### Phase 5: B2C Searcher Portal (Frontend)
+*   [ ] Build the beautiful landing page with the AI Search Bar.
+*   [ ] Build the Search Results page (List view + Map view).
+*   [ ] Build the PG Details page (Photos, Amenities, Reviews).
+*   [ ] Implement user booking/visit requests.
+
+### Phase 6: Mobile App Readiness
+*   [ ] Ensure all API routes are fully secured with JWT (JSON Web Tokens).
+*   [ ] Write API documentation (Swagger/Postman) so a mobile developer can easily build the Flutter/React Native app.
+
+---
+
+## 🛠️ Your Current Task: Setting Up MongoDB
+
+To build this, our Next.js app needs a database. Here are the exact, step-by-step instructions for what you need to do right now in MongoDB:
+
+1.  **Go to the Website:** Open [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) and create a free account.
+2.  **Create a Cluster:** 
+    *   Click **"Create a Deployment"** or **"Build a Database"**.
+    *   Select the **"M0 Free"** option (Completely free forever).
+    *   Choose any provider (AWS/Google Cloud) and a region closest to you.
+    *   Click **Create**.
+3.  **Create a Database User:**
+    *   It will ask you to create a Username and Password. 
+    *   *Type a username and a simple password, and save them somewhere safe.*
+4.  **Configure Network Access:**
+    *   It will ask "Where would you like to connect from?".
+    *   Select **"Allow Access from Anywhere"** (This adds IP `0.0.0.0/0`).
+5.  **Get the Connection String:**
+    *   Go to your Database dashboard and click the **"Connect"** button.
+    *   Select **"Drivers"** (or "Connect your application").
+    *   You will see a string that looks like this: `mongodb+srv://<username>:<password>@cluster0.abcde.mongodb.net/?retryWrites=true&w=majority`
+6.  **Send it to me:** Paste that entire string here in the chat (replace `<password>` with the password you created).

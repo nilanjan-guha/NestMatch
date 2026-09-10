@@ -1,0 +1,112 @@
+'use client';
+import { useState } from 'react';
+
+export default function MediaCarousel({ 
+  media, 
+  height = '400px', 
+  objectFit = 'contain' 
+}: { 
+  media: string[], 
+  height?: string, 
+  objectFit?: 'contain' | 'cover' 
+}) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  if (!media || media.length === 0) {
+    return (
+      <div style={{ width: '100%', height, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+        No media available
+      </div>
+    );
+  }
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % media.length);
+  };
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
+  };
+
+  const currentMedia = media[currentIndex];
+  const isVideo = currentMedia.match(/\.(mp4|webm|ogg)$/i) || currentMedia.includes('video');
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height, background: '#000', borderRadius: '12px', overflow: 'hidden' }}>
+      
+      {/* Media Rendering */}
+      {isVideo ? (
+        <video 
+          key={currentMedia}
+          src={currentMedia} 
+          controls 
+          style={{ width: '100%', height: '100%', objectFit, animation: 'fadeIn 0.3s ease-in-out' }}
+        />
+      ) : (
+        <img 
+          key={currentMedia}
+          src={currentMedia} 
+          alt={`Media ${currentIndex + 1}`} 
+          style={{ width: '100%', height: '100%', objectFit, animation: 'fadeIn 0.3s ease-in-out' }}
+        />
+      )}
+      
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0.5; }
+          to { opacity: 1; }
+        }
+      `}</style>
+
+      {/* Navigation Controls */}
+      {media.length > 1 && (
+        <>
+          <button 
+            onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+            style={navButtonStyle('left')}
+          >
+            &#10094;
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); handleNext(); }}
+            style={navButtonStyle('right')}
+          >
+            &#10095;
+          </button>
+        </>
+      )}
+
+      {/* Indicators */}
+      {media.length > 1 && (
+        <div style={{ position: 'absolute', bottom: '15px', width: '100%', display: 'flex', justifyContent: 'center', gap: '8px' }}>
+          {media.map((_, idx) => (
+            <div 
+              key={idx} 
+              style={{
+                width: '10px', height: '10px', borderRadius: '50%',
+                background: idx === currentIndex ? 'var(--primary)' : 'rgba(255,255,255,0.5)',
+                cursor: 'pointer'
+              }}
+              onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const navButtonStyle = (side: 'left' | 'right') => ({
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  [side]: '10px',
+  transform: 'translateY(-50%)',
+  background: 'rgba(0,0,0,0.5)',
+  color: 'white',
+  border: 'none',
+  padding: '12px',
+  cursor: 'pointer',
+  borderRadius: '50%',
+  fontSize: '18px',
+  zIndex: 10
+});
