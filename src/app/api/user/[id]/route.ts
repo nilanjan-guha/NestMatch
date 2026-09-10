@@ -32,6 +32,12 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    const isTargetSuperAdmin = (user.email && user.email === process.env.ADMIN_EMAIL) || (user.phone && user.phone === process.env.ADMIN_PHONE);
+    
+    if (isTargetSuperAdmin) {
+      return NextResponse.json({ error: 'Cannot delete the Super Admin.' }, { status: 403 });
+    }
+
     // Completely delete the user from Clerk so they are forced to register again!
     if (user.clerkId) {
       try {

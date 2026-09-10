@@ -77,22 +77,26 @@ export default function AdminUserTable({ users }: { users: any[] }) {
                 </span>
               </td>
               <td style={{ padding: '10px' }}>
-                <button
-                  onClick={() => requestDelete(u._id)}
-                  disabled={loading === u._id}
-                  style={{
-                    padding: '6px 12px',
-                    background: 'rgba(239, 68, 68, 0.2)',
-                    color: '#f87171',
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    opacity: loading === u._id ? 0.7 : 1
-                  }}
-                >
-                  {loading === u._id ? 'Deleting...' : 'Delete'}
-                </button>
+                {u.isSuperAdminUser ? (
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Super Admin</span>
+                ) : (
+                  <button
+                    onClick={() => requestDelete(u._id)}
+                    disabled={loading === u._id}
+                    style={{
+                      padding: '6px 12px',
+                      background: 'rgba(239, 68, 68, 0.2)',
+                      color: '#f87171',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      opacity: loading === u._id ? 0.7 : 1
+                    }}
+                  >
+                    {loading === u._id ? 'Deleting...' : 'Delete'}
+                  </button>
+                )}
               </td>
             </tr>
           ))}

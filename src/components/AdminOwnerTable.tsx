@@ -103,22 +103,26 @@ export default function AdminOwnerTable({ owners, properties }: { owners: any[],
                     >
                       {expandedOwner === ownerIdStr ? 'Hide PGs' : 'View PGs'}
                     </button>
-                    <button
-                      onClick={() => requestDelete(ownerIdStr)}
-                      disabled={loading === ownerIdStr}
-                      style={{
-                        padding: '6px 12px',
-                        background: 'rgba(239, 68, 68, 0.2)',
-                        color: '#f87171',
-                        border: '1px solid rgba(239, 68, 68, 0.3)',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        opacity: loading === ownerIdStr ? 0.7 : 1
-                      }}
-                    >
-                      {loading === ownerIdStr ? 'Deleting...' : 'Delete'}
-                    </button>
+                    {owner.isSuperAdminUser ? (
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', padding: '6px' }}>Super Admin</span>
+                    ) : (
+                      <button
+                        onClick={() => requestDelete(ownerIdStr)}
+                        disabled={loading === ownerIdStr}
+                        style={{
+                          padding: '6px 12px',
+                          background: 'rgba(239, 68, 68, 0.2)',
+                          color: '#f87171',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          opacity: loading === ownerIdStr ? 0.7 : 1
+                        }}
+                      >
+                        {loading === ownerIdStr ? 'Deleting...' : 'Delete'}
+                      </button>
+                    )}
                   </td>
                 </tr>
                 {expandedOwner === ownerIdStr && (

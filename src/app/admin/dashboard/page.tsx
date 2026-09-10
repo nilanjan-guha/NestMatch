@@ -38,9 +38,16 @@ export default async function AdminDashboard() {
   const totalBookings = await BookingInterest.countDocuments();
 
   // Fetch Lists
-  const users = await User.find().sort({ createdAt: -1 });
+  const dbUsers = await User.find().sort({ createdAt: -1 }).lean();
   const properties = await PGProperty.find({}).populate('owner_id', 'name email phone').sort({ createdAt: -1 }).lean();
   
+  // Flag super admin in the users array
+  const users = dbUsers.map((u: any) => ({
+    ...u,
+    _id: u._id.toString(), // Fix React serialization issue for lean objects
+    isSuperAdminUser: (u.email && u.email === process.env.ADMIN_EMAIL) || (u.phone && u.phone === process.env.ADMIN_PHONE)
+  }));
+
   // Filter users
   const searchers = users.filter((u: any) => u.role === 'searcher');
   const owners = users.filter((u: any) => u.role === 'owner');
