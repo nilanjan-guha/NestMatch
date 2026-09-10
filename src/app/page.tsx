@@ -2,8 +2,10 @@
 import { useState, useEffect } from 'react';
 import AiSearchBar from '@/components/AiSearchBar';
 import PGCard from '@/components/PGCard';
+import { useUser } from '@clerk/nextjs';
 
 export default function Home() {
+  const { user } = useUser();
   const [pgs, setPgs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -14,23 +16,21 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(false);
   const [currentQuery, setCurrentQuery] = useState('');
 
-  // Fetch initial PGs and Session
+  // Fetch Session from Clerk user object
   useEffect(() => {
-    fetch('/api/auth/session')
-      .then(res => res.json())
-      .then(session => {
-        if (session && session.user) {
-          setUserRole(session.user.role);
-          if (session.user.location) {
-            setUserLocation(session.user.location);
-          }
-          if (session.user.coordinates) {
-            setUserCoords(session.user.coordinates);
-          }
-        }
-      })
-      .catch(console.error);
+    if (user) {
+      const role = user.publicMetadata?.role as string;
+      setUserRole(role || 'USER');
+      const location = user.publicMetadata?.location as string;
+      const coordinates = user.publicMetadata?.coordinates as [number, number];
+      
+      if (location) setUserLocation(location);
+      if (coordinates) setUserCoords(coordinates);
+    }
+  }, [user]);
 
+  // Fetch initial PGs
+  useEffect(() => {
     fetch('/api/properties')
       .then(res => res.json())
       .then(data => {
