@@ -8,16 +8,7 @@ import InteractiveMap from '@/components/InteractiveMap';
 
 type ModalType = 'about' | 'howItWorks' | 'listProperty' | 'contact' | 'privacy' | 'terms' | null;
 
-const POPULAR_SEARCHES = [
-  { emoji: '👦', title: 'Boys PG in Gurgaon', subtitle: 'Affordable & near offices', query: 'Boys PG in Gurgaon' },
-  { emoji: '👧', title: 'Girls PG near Metro', subtitle: 'Safe & well-connected', query: 'Safe Girls PG near Metro station' },
-  { emoji: '👫', title: 'Couples Friendly PG', subtitle: 'Privacy & freedom', query: 'Couples friendly PG with privacy' },
-  { emoji: '🍽️', title: 'PG with Food & Laundry', subtitle: 'Hassle-free living', query: 'PG with food and laundry service included' },
-  { emoji: '💸', title: 'Budget PG under ₹5K', subtitle: 'Light on your pocket', query: 'Cheap PG under 5000 rupees' },
-  { emoji: '🏢', title: 'PG near Cyber Hub', subtitle: 'Walk to work', query: 'PG near Cyber Hub Gurgaon' },
-  { emoji: '🌐', title: 'PG with WiFi & AC', subtitle: 'Modern essentials', query: 'PG with WiFi and AC facilities' },
-  { emoji: '🏋️', title: 'PG with Gym', subtitle: 'Stay fit, stay sharp', query: 'PG with gym and fitness facilities' },
-];
+import { POPULAR_SEARCHES } from '@/constants/searchSuggestions';
 
 export default function Home() {
   const { user } = useUser();
@@ -30,6 +21,7 @@ export default function Home() {
   const [userCoords, setUserCoords] = useState<[number, number] | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [displaySearches, setDisplaySearches] = useState<typeof POPULAR_SEARCHES>([]);
   const [currentQuery, setCurrentQuery] = useState('');
   const [loadingText, setLoadingText] = useState('Searching the database...');
   const [sortBy, setSortBy] = useState<string>('recommended');
@@ -147,6 +139,11 @@ export default function Home() {
   }, [pgs, hasSearched, currentQuery, sortBy, userCoords, hasMore, page]);
 
   // Shuffle loading text
+  useEffect(() => {
+    // Only run on client to prevent hydration mismatch
+    setDisplaySearches([...POPULAR_SEARCHES].sort(() => 0.5 - Math.random()).slice(0, 8));
+  }, []);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (loading) {
@@ -383,7 +380,7 @@ export default function Home() {
             <h2 className="section-title">Popular Searches</h2>
             <p className="section-subtitle">Quick searches that people love</p>
             <div className="popular-grid">
-              {POPULAR_SEARCHES.map((item, i) => (
+              {displaySearches.map((item, i) => (
                 <div key={i} className="popular-card" onClick={() => handlePopularSearch(item.query)}>
                   <span className="popular-icon">{item.emoji}</span>
                   <div>

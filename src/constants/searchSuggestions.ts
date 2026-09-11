@@ -63,3 +63,24 @@ export const TEXTAREA_PLACEHOLDERS = [
   'Work from home setup? (e.g. High speed internet, study table)',
   'Budget constraints? (e.g. Strictly under ₹8000 per month)'
 ];
+
+export const POPULAR_SEARCHES = [
+  { emoji: '👦', title: 'Boys PG in Gurgaon', subtitle: 'Affordable & near offices', query: 'Boys PG in Gurgaon' },
+  { emoji: '👧', title: 'Girls PG near Metro', subtitle: 'Safe & well-connected', query: 'Safe Girls PG near Metro station' },
+  { emoji: '👫', title: 'Couples Friendly PG', subtitle: 'Privacy & freedom', query: 'Couples friendly PG with privacy' },
+  { emoji: '🍽️', title: 'PG with Food & Laundry', subtitle: 'Hassle-free living', query: 'PG with food and laundry service included' },
+  { emoji: '💸', title: 'Budget PG under ₹5K', subtitle: 'Light on your pocket', query: 'Cheap PG under 5000 rupees' },
+  { emoji: '🏢', title: 'PG near Cyber Hub', subtitle: 'Walk to work', query: 'PG near Cyber Hub Gurgaon' },
+  { emoji: '🌐', title: 'PG with WiFi & AC', subtitle: 'Modern essentials', query: 'PG with WiFi and AC facilities' },
+  { emoji: '🏋️', title: 'PG with Gym', subtitle: 'Stay fit, stay sharp', query: 'PG with gym and fitness facilities' },
+  { emoji: '🎓', title: 'Student PG near University', subtitle: 'Quiet & study-friendly', query: 'Student PG near University with quiet environment' },
+  { emoji: '🔒', title: 'PG with CCTV & Security', subtitle: 'Safe & secure living', query: 'PG with 24/7 security and CCTV cameras' },
+  { emoji: '🚗', title: 'PG with Parking Space', subtitle: 'Safe spot for your ride', query: 'PG with dedicated car and bike parking' },
+  { emoji: '🧹', title: 'PG with Daily Housekeeping', subtitle: 'Clean & hygienic', query: 'PG with daily cleaning and housekeeping services' },
+  { emoji: '🌞', title: 'PG with Balcony/Terrace', subtitle: 'Fresh air & views', query: 'PG with attached balcony or open terrace' },
+  { emoji: '🛋️', title: 'Fully Furnished PG', subtitle: 'Move in with a suitcase', query: 'Fully furnished PG with bed, wardrobe and table' },
+  { emoji: '🌙', title: 'No Curfew PG', subtitle: 'For night shift workers', query: 'PG with no curfew or late night entry allowed' },
+  { emoji: '🐾', title: 'Pet-Friendly PG', subtitle: 'Bring your furry friend', query: 'Pet friendly PG' },
+  { emoji: '💼', title: 'Executive PG', subtitle: 'Premium living experience', query: 'Premium executive PG for working professionals' },
+  { emoji: '🌳', title: 'PG near Park', subtitle: 'Nature & greenery', query: 'PG located near a park or green area' },
+];
