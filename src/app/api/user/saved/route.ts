@@ -25,7 +25,7 @@ export async function GET() {
 
     const properties = saved.map(s => {
       // If it's a locally stored PG, property_id is populated as the full object
-      if (s.property_id && typeof s.property_id === 'object' && s.property_id.name) {
+      if (s.property_id && typeof s.property_id === 'object' && (s.property_id as any).name) {
         return s.property_id;
       }
       // Otherwise, it's a Google Maps PG cached in property_data

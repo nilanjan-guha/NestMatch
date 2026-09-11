@@ -60,7 +60,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       const properties = await PGProperty.find({ owner_id: id });
       for (const property of properties) {
         await BookingInterest.deleteMany({ property_id: property._id });
-        await SavedProperty.deleteMany({ property_id: property._id });
+        await SavedProperty.deleteMany({ property_id: property._id.toString() });
       }
       await PGProperty.deleteMany({ owner_id: id });
     }
