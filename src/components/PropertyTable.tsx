@@ -53,7 +53,7 @@ export default function PropertyTable({ properties }: { properties: any[] }) {
   };
 
   return (
-    <div style={{ overflowX: 'auto' }}>
+    <div className="table-responsive-wrapper">
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
         <thead>
           <tr style={{ borderBottom: '1px solid var(--surface-border)', color: 'var(--text-muted)' }}>

@@ -6,7 +6,7 @@ import OpenAI from 'openai';
 
 // Initialize Gemini and OpenAI Clients
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || '' });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || '', maxRetries: 0 });
 
 // Define the schema for structured output
 const searchSchema = {

@@ -1,8 +1,17 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { toast } from 'react-hot-toast';
 import { ALL_SUGGESTION_CHIPS, PLACEHOLDER_EXAMPLES, TEXTAREA_PLACEHOLDERS } from '@/constants/searchSuggestions';
 
-export default function AiSearchBar({ onSearch, defaultLocation }: { onSearch: (query: string, coordinates?: [number, number]) => void, defaultLocation?: string }) {
+export default function AiSearchBar({ 
+  onSearch, 
+  defaultLocation, 
+  externalQuery 
+}: { 
+  onSearch: (query: string, coordinates?: [number, number]) => void, 
+  defaultLocation?: string,
+  externalQuery?: { query: string, ts: number } | null
+}) {
   const [location, setLocation] = useState('');
   const [requirements, setRequirements] = useState('');
   const [coords, setCoords] = useState<[number, number] | undefined>(undefined);
@@ -29,6 +38,22 @@ export default function AiSearchBar({ onSearch, defaultLocation }: { onSearch: (
       setLocation(defaultLocation);
     }
   }, [defaultLocation]);
+
+  useEffect(() => {
+    if (externalQuery) {
+      setRequirements(externalQuery.query);
+      if (!location.trim()) {
+        toast.error('Please select the location first!');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const finalQuery = `Location: ${location}. Requirements: ${externalQuery.query}`;
+        onSearch(finalQuery, coords);
+        setTimeout(() => {
+          window.scrollBy({ top: window.innerHeight * 0.6, behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  }, [externalQuery]);
 
   const handleLocationChange = (val: string) => {
     setLocation(val);
@@ -103,6 +128,10 @@ export default function AiSearchBar({ onSearch, defaultLocation }: { onSearch: (
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!location.trim()) {
+      toast.error('Please select the location first!');
+      return;
+    }
     if (location.trim() || requirements.trim()) {
       const finalQuery = `Location: ${location || 'Anywhere'}. Requirements: ${requirements || 'Any PG'}`;
       onSearch(finalQuery, coords);
@@ -116,14 +145,16 @@ export default function AiSearchBar({ onSearch, defaultLocation }: { onSearch: (
   const handleChipClick = (chipLabel: string) => {
     setRequirements(chipLabel);
     // If location is set, trigger search immediately
-    if (location.trim()) {
-      const finalQuery = `Location: ${location}. Requirements: ${chipLabel}`;
-      onSearch(finalQuery, coords);
-      // Auto-scroll so results are visible
-      setTimeout(() => {
-        window.scrollBy({ top: window.innerHeight * 0.6, behavior: 'smooth' });
-      }, 100);
+    if (!location.trim()) {
+      toast.error('Please select the location first!');
+      return;
     }
+    const finalQuery = `Location: ${location}. Requirements: ${chipLabel}`;
+    onSearch(finalQuery, coords);
+    // Auto-scroll so results are visible
+    setTimeout(() => {
+      window.scrollBy({ top: window.innerHeight * 0.6, behavior: 'smooth' });
+    }, 100);
   };
 
   return (

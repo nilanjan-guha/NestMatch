@@ -5,6 +5,7 @@ import connectToDatabase from '@/utils/db';
 import { SavedProperty } from '@/models/SavedProperty';
 import WatchlistTable from '@/components/WatchlistTable';
 import { PGProperty } from '@/models/PGProperty'; // Ensure model is loaded
+import Link from 'next/link';
 
 export default async function SavedPropertiesPage() {
   const { userId } = await auth();
@@ -35,7 +36,12 @@ export default async function SavedPropertiesPage() {
 
   return (
     <main className="container" style={{ padding: '40px 24px' }}>
-      <h1 style={{ fontSize: '32px', marginBottom: '40px' }}>My Watchlist</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+        <h1 style={{ fontSize: '32px', margin: 0 }}>My Watchlist</h1>
+        <Link href="/" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '14px' }}>
+          ← Back to Home
+        </Link>
+      </div>
 
       {properties.length === 0 ? (
         <div className="glass-panel" style={{ padding: '60px', textAlign: 'center' }}>

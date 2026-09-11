@@ -4,11 +4,13 @@ import { useState } from 'react';
 export default function MediaCarousel({ 
   media, 
   height = '400px', 
-  objectFit = 'contain' 
+  objectFit = 'contain',
+  disableFullScreen = false
 }: { 
   media: string[], 
   height?: string, 
-  objectFit?: 'contain' | 'cover' 
+  objectFit?: 'contain' | 'cover',
+  disableFullScreen?: boolean
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [fullScreen, setFullScreen] = useState(false);
@@ -41,16 +43,22 @@ export default function MediaCarousel({
           key={currentMedia}
           src={currentMedia} 
           controls 
-          style={{ width: '100%', height: '100%', objectFit, animation: 'fadeIn 0.3s ease-in-out', cursor: 'pointer' }}
-          onClick={(e) => { e.stopPropagation(); setFullScreen(true); }}
+          style={{ width: '100%', height: '100%', objectFit, animation: 'fadeIn 0.3s ease-in-out', cursor: disableFullScreen ? 'default' : 'pointer' }}
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            if (!disableFullScreen) setFullScreen(true); 
+          }}
         />
       ) : (
         <img 
           key={currentMedia}
           src={currentMedia} 
           alt={`Media ${currentIndex + 1}`} 
-          style={{ width: '100%', height: '100%', objectFit, animation: 'fadeIn 0.3s ease-in-out', cursor: 'pointer' }}
-          onClick={(e) => { e.stopPropagation(); setFullScreen(true); }}
+          style={{ width: '100%', height: '100%', objectFit, animation: 'fadeIn 0.3s ease-in-out', cursor: disableFullScreen ? 'default' : 'pointer' }}
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            if (!disableFullScreen) setFullScreen(true); 
+          }}
         />
       )}
       

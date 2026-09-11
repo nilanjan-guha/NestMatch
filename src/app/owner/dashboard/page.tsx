@@ -43,7 +43,7 @@ export default async function OwnerDashboard() {
         {interests.length === 0 ? (
           <p style={{ color: 'var(--text-muted)' }}>No bookings or interests yet. Make sure your properties are well-detailed!</p>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div className="table-responsive-wrapper">
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--surface-border)', color: 'var(--text-muted)' }}>

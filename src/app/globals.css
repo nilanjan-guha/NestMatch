@@ -99,7 +99,14 @@ body {
   gap: 24px;
 }
 
-/* Push away effect removed as per user request */
+/* Map Wrapper */
+.map-wrapper {
+  flex: 1 1 400px;
+  min-width: 300px;
+  position: sticky;
+  top: 100px;
+  height: calc(100vh - 120px);
+}
 
 /* Custom Scrollbar Styles */
 ::-webkit-scrollbar {
@@ -257,6 +264,16 @@ body {
     width: 100%;
     margin-bottom: 20px;
     border-radius: 8px;
+  }
+
+  /* Map Wrapper Responsive */
+  .map-wrapper {
+    position: relative !important;
+    top: 0 !important;
+    height: 350px !important;
+    width: 100% !important;
+    margin-bottom: 20px;
+    flex: 1 1 100% !important;
   }
 
   /* CSS Checkbox Hack for Navbar */

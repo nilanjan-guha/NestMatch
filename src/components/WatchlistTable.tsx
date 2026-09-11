@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import MediaCarousel from './MediaCarousel';
+import PGDetailsModal from './PGDetailsModal';
 
 export default function WatchlistTable({ properties }: { properties: any[] }) {
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function WatchlistTable({ properties }: { properties: any[] }) {
 
   return (
     <>
-      <div style={{ overflowX: 'auto' }}>
+      <div className="table-responsive-wrapper">
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--surface-border)', color: 'var(--text-muted)' }}>
@@ -81,114 +81,17 @@ export default function WatchlistTable({ properties }: { properties: any[] }) {
       </div>
 
       {selectedProperty && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px'
-        }} onClick={() => setSelectedProperty(null)}>
-          <div className="glass-panel" style={{
-            background: 'var(--background)', width: '100%', maxWidth: '600px', maxHeight: '90vh',
-            overflowY: 'auto', padding: '30px', position: 'relative', borderRadius: '16px',
-            border: '1px solid var(--surface-border)'
-          }} onClick={(e) => e.stopPropagation()}>
-            <button 
-              onClick={() => setSelectedProperty(null)}
-              style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '20px', cursor: 'pointer' }}
-            >
-              ✕
-            </button>
-            
-            {/* Header */}
-            <div style={{ marginBottom: '24px' }}>
-              <h2 style={{ margin: 0, fontSize: '24px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                {selectedProperty.name}
-              </h2>
-              <div style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>
-                {selectedProperty.address?.city}, {selectedProperty.address?.state} • {selectedProperty.gender_type}
-              </div>
-            </div>
-
-            {/* Images Placeholder */}
-            {selectedProperty.media && selectedProperty.media.length > 0 ? (
-              <div style={{ marginBottom: '24px', borderRadius: '12px', overflow: 'hidden' }}>
-                <MediaCarousel media={selectedProperty.media} height="250px" objectFit="cover" />
-              </div>
-            ) : (
-              <div style={{ width: '100%', height: '150px', background: 'var(--surface-border)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', color: 'var(--text-muted)' }}>
-                No Images Uploaded
-              </div>
-            )}
-
-            {/* Content Grid */}
-            <div className="grid-stack-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>💰</span> Pricing
-                </h4>
-                <div style={{ fontSize: '14px' }}>
-                  <div style={{ marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Monthly Rent:</span> <strong style={{ color: 'var(--secondary)' }}>₹{selectedProperty.pricing?.monthly_rent}</strong></div>
-                  <div style={{ marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Deposit:</span> ₹{selectedProperty.pricing?.deposit_amount}</div>
-                  <div><span style={{ color: 'var(--text-muted)' }}>Notice Period:</span> {selectedProperty.pricing?.notice_period_days} days</div>
-                </div>
-              </div>
-
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>📋</span> Details
-                </h4>
-                <div style={{ fontSize: '14px' }}>
-                  <div style={{ marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Total Beds:</span> {selectedProperty.capacity?.total_beds || 'N/A'}</div>
-                  <div style={{ marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Available:</span> <strong style={{ color: '#4ade80' }}>{selectedProperty.capacity?.available_beds || 'N/A'}</strong></div>
-                  <div style={{ marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Room Details:</span> {selectedProperty.capacity?.room_details || 'N/A'}</div>
-                  
-                  <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                    <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>Owner Details:</span> 
-                    <strong>{selectedProperty.owner_id?.name || 'Unknown'}</strong>
-                    {selectedProperty.owner_id?.email && <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>📧 {selectedProperty.owner_id.email}</div>}
-                    {selectedProperty.owner_id?.phone && <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>📞 {selectedProperty.owner_id.phone}</div>}
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px', gridColumn: '1 / -1' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>✨</span> Amenities & Rules
-                </h4>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
-                  {selectedProperty.amenities?.map((am: string, i: number) => (
-                    <span key={i} style={{ padding: '4px 10px', background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', borderRadius: '20px', fontSize: '12px' }}>
-                      {am}
-                    </span>
-                  ))}
-                  {(!selectedProperty.amenities || selectedProperty.amenities.length === 0) && (
-                    <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>None listed</span>
-                  )}
-                </div>
-                
-                <h5 style={{ color: 'var(--text-muted)', marginBottom: '8px', fontSize: '13px' }}>Rules:</h5>
-                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: 'var(--foreground)' }}>
-                  {selectedProperty.rules?.map((rule: string, i: number) => (
-                    <li key={i} style={{ marginBottom: '4px' }}>{rule}</li>
-                  ))}
-                  {(!selectedProperty.rules || selectedProperty.rules.length === 0) && (
-                    <li style={{ color: 'var(--text-muted)' }}>No special rules listed</li>
-                  )}
-                </ul>
-              </div>
-
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px', gridColumn: '1 / -1' }}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>📝</span> Description
-                </h4>
-                <p style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-muted)', margin: 0 }}>
-                  {selectedProperty.description || 'No description provided.'}
-                </p>
-              </div>
-
-            </div>
-          </div>
-        </div>
+        <PGDetailsModal
+          pg={selectedProperty}
+          onClose={() => setSelectedProperty(null)}
+          pgMedia={selectedProperty.media && selectedProperty.media.length > 0 ? selectedProperty.media : (selectedProperty.images && selectedProperty.images.length > 0 ? selectedProperty.images : ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop'])}
+          isOwnerView={false}
+          isFromAPI={selectedProperty.amenities?.includes('Google Maps Verified')}
+          isSaved={true}
+          saving={loadingId === (selectedProperty._id || selectedProperty.id)?.toString()}
+          booking={false}
+          onSave={() => handleUnsave((selectedProperty._id || selectedProperty.id)?.toString())}
+        />
       )}
     </>
   );

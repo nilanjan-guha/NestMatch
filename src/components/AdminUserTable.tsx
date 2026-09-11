@@ -52,6 +52,7 @@ export default function AdminUserTable({ users }: { users: any[] }) {
 
   return (
     <>
+      <div className="table-responsive-wrapper">
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
         <thead>
           <tr style={{ borderBottom: '1px solid var(--surface-border)', color: 'var(--text-muted)' }}>
@@ -107,6 +108,7 @@ export default function AdminUserTable({ users }: { users: any[] }) {
           )}
         </tbody>
       </table>
+      </div>
       <ConfirmModal
         isOpen={modalOpen}
         title="Delete User"

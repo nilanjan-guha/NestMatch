@@ -4,6 +4,7 @@ import AiSearchBar from '@/components/AiSearchBar';
 import PGCard from '@/components/PGCard';
 import FooterModals from '@/components/FooterModals';
 import { useUser } from '@clerk/nextjs';
+import InteractiveMap from '@/components/InteractiveMap';
 
 type ModalType = 'about' | 'howItWorks' | 'listProperty' | 'contact' | 'privacy' | 'terms' | null;
 
@@ -33,6 +34,8 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<string>('recommended');
   const [hasSearched, setHasSearched] = useState(false);
   const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const [hoveredPgId, setHoveredPgId] = useState<string | null>(null);
+  const [externalQuery, setExternalQuery] = useState<{ query: string, ts: number } | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   // Compute sorted PGs
@@ -79,16 +82,67 @@ export default function Home() {
     }
   }, [user]);
 
-  // Fetch initial PGs
+  // Load state from sessionStorage on mount
   useEffect(() => {
+    // If it's a page reload, clear the session storage so we start fresh
+    const isReload = window.performance?.getEntriesByType('navigation')?.[0]?.type === 'reload';
+    if (isReload) {
+      sessionStorage.removeItem('nestMatchSearchState');
+    } else {
+      const savedStateStr = sessionStorage.getItem('nestMatchSearchState');
+      if (savedStateStr) {
+        try {
+          const savedState = JSON.parse(savedStateStr);
+          if (savedState.hasSearched) {
+            setPgs(savedState.pgs || []);
+            setHasMore(savedState.hasMore || false);
+            setHasSearched(savedState.hasSearched || false);
+            setCurrentQuery(savedState.currentQuery || '');
+            setSortBy(savedState.sortBy || 'recommended');
+            if (savedState.userCoords) setUserCoords(savedState.userCoords);
+            setPage(savedState.page || 1);
+            setLoading(false);
+            
+            // Scroll to results if there are any
+            setTimeout(() => {
+              resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
+            return; // Skip initial fetch since we loaded from state
+          }
+        } catch (e) {
+          console.error("Failed to parse saved search state", e);
+        }
+      }
+    }
+
+    // Default initial fetch if no valid saved state
     fetch('/api/properties')
       .then(res => res.json())
       .then(data => {
         setPgs(data.data || []);
         setHasMore((data.data || []).length === 10);
         setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
       });
   }, []);
+
+  // Save state to sessionStorage when it changes
+  useEffect(() => {
+    if (hasSearched) {
+      sessionStorage.setItem('nestMatchSearchState', JSON.stringify({
+        pgs,
+        hasSearched,
+        currentQuery,
+        sortBy,
+        userCoords,
+        hasMore,
+        page
+      }));
+    }
+  }, [pgs, hasSearched, currentQuery, sortBy, userCoords, hasMore, page]);
 
   const handleSearch = async (query: string, coordinates?: [number, number]) => {
     setLoading(true);
@@ -142,7 +196,7 @@ export default function Home() {
   };
 
   const handlePopularSearch = (query: string) => {
-    handleSearch(`Requirements: ${query}`, userCoords);
+    setExternalQuery({ query, ts: Date.now() });
   };
 
   return (
@@ -156,7 +210,7 @@ export default function Home() {
           Just tell us what you&apos;re looking for, and we will instantly find the best home for you.
         </p>
         
-        <AiSearchBar onSearch={handleSearch} defaultLocation={userLocation} />
+        <AiSearchBar onSearch={handleSearch} defaultLocation={userLocation} externalQuery={externalQuery} />
       </section>
 
       {/* Results Section */}
@@ -210,31 +264,51 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="grid-auto-fit">
-              {sortedPgs.map((pg: any, idx: number) => (
-                <PGCard 
-                  key={`${pg._id || 'pg'}-${idx}`} 
-                  pg={pg} 
-                  currentUserRole={userRole} 
-                  initialSaved={savedPropertyIds.includes(pg._id || pg.id)}
-                />
-              ))}
-            </div>
-            {hasMore && (
-              <div style={{ textAlign: 'center', marginTop: '40px' }}>
-                <button 
-                  onClick={loadMore} 
-                  disabled={loadingMore}
-                  className="load-more-btn"
-                >
-                  {loadingMore ? (
-                    <>⏳ Loading more...</>
-                  ) : (
-                    <>Showing {pgs.length} results • Load More ↓</>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+                <div style={{ flex: '1 1 500px', minWidth: 0 }}>
+                  <div className="grid-auto-fit" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                    {sortedPgs.map((pg: any, idx: number) => {
+                      const id = pg._id || pg.id;
+                      return (
+                        <PGCard 
+                          key={`${id}-${idx}`} 
+                          pg={pg} 
+                          currentUserRole={userRole} 
+                          initialSaved={savedPropertyIds.includes(id)}
+                          onMouseEnter={() => setHoveredPgId(id)}
+                          onMouseLeave={() => setHoveredPgId(null)}
+                        />
+                      );
+                    })}
+                  </div>
+                  {hasMore && (
+                    <div style={{ textAlign: 'center', marginTop: '40px' }}>
+                      <button 
+                        onClick={loadMore} 
+                        disabled={loadingMore}
+                        className="load-more-btn"
+                      >
+                        {loadingMore ? (
+                          <>⏳ Loading more...</>
+                        ) : (
+                          <>Showing {pgs.length} results • Load More ↓</>
+                        )}
+                      </button>
+                    </div>
                   )}
-                </button>
+                </div>
+                
+                {/* Interactive Map */}
+                <div className="map-wrapper">
+                  <InteractiveMap 
+                    pgs={sortedPgs} 
+                    hoveredPgId={hoveredPgId} 
+                    userCoords={userCoords}
+                  />
+                </div>
               </div>
-            )}
+            </div>
           </>
         ) : hasSearched ? (
           <div className="empty-state">
