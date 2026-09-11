@@ -28,6 +28,10 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# documentation
+NestMatch_Documentation.txt
+NestMatch_User_Stories.csv
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
