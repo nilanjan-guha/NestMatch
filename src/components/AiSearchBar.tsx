@@ -1,23 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-
-const SUGGESTION_CHIPS = [
-  { emoji: '🛡️', label: 'Safe PGs for Girls' },
-  { emoji: '💰', label: 'Budget PG under ₹5000' },
-  { emoji: '🏋️', label: 'PG with Gym & Pool' },
-  { emoji: '🍕', label: 'PG with Meals Included' },
-  { emoji: '📶', label: 'PG with WiFi & AC' },
-  { emoji: '👫', label: 'Couples Friendly PG' },
-  { emoji: '🚇', label: 'PG near Metro Station' },
-];
-
-const PLACEHOLDER_EXAMPLES = [
-  'Where do you want to live? (e.g. Sector 18, Noida)',
-  'Try: Safe PG for girls in Koramangala...',
-  'Try: Furnished PG with AC under ₹8000...',
-  'Try: Boys PG near Cyber Hub, Gurgaon...',
-  'Try: PG with food and laundry in HSR Layout...',
-];
+import { ALL_SUGGESTION_CHIPS, PLACEHOLDER_EXAMPLES, TEXTAREA_PLACEHOLDERS } from '@/constants/searchSuggestions';
 
 export default function AiSearchBar({ onSearch, defaultLocation }: { onSearch: (query: string, coordinates?: [number, number]) => void, defaultLocation?: string }) {
   const [location, setLocation] = useState('');
@@ -28,15 +11,17 @@ export default function AiSearchBar({ onSearch, defaultLocation }: { onSearch: (
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loadingLoc, setLoadingLoc] = useState(false);
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  const [shuffledChips, setShuffledChips] = useState<any[]>([]);
   
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cycle through animated placeholders
+  // Set a random placeholder on mount, do not cycle it every second
   useEffect(() => {
-    const interval = setInterval(() => {
-      setPlaceholderIdx(prev => (prev + 1) % PLACEHOLDER_EXAMPLES.length);
-    }, 3000);
-    return () => clearInterval(interval);
+    setPlaceholderIdx(Math.floor(Math.random() * PLACEHOLDER_EXAMPLES.length));
+    
+    // Shuffle chips on mount
+    const shuffled = [...ALL_SUGGESTION_CHIPS].sort(() => 0.5 - Math.random());
+    setShuffledChips(shuffled.slice(0, 6));
   }, []);
 
   useEffect(() => {
@@ -121,6 +106,10 @@ export default function AiSearchBar({ onSearch, defaultLocation }: { onSearch: (
     if (location.trim() || requirements.trim()) {
       const finalQuery = `Location: ${location || 'Anywhere'}. Requirements: ${requirements || 'Any PG'}`;
       onSearch(finalQuery, coords);
+      // Auto-scroll so results are visible
+      setTimeout(() => {
+        window.scrollBy({ top: window.innerHeight * 0.6, behavior: 'smooth' });
+      }, 100);
     }
   };
 
@@ -130,6 +119,10 @@ export default function AiSearchBar({ onSearch, defaultLocation }: { onSearch: (
     if (location.trim()) {
       const finalQuery = `Location: ${location}. Requirements: ${chipLabel}`;
       onSearch(finalQuery, coords);
+      // Auto-scroll so results are visible
+      setTimeout(() => {
+        window.scrollBy({ top: window.innerHeight * 0.6, behavior: 'smooth' });
+      }, 100);
     }
   };
 
@@ -143,7 +136,7 @@ export default function AiSearchBar({ onSearch, defaultLocation }: { onSearch: (
           value={location}
           onChange={(e) => handleLocationChange(e.target.value)}
           onFocus={() => { if(suggestions.length > 0) setShowSuggestions(true); }}
-          placeholder={PLACEHOLDER_EXAMPLES[placeholderIdx]}
+          placeholder={PLACEHOLDER_EXAMPLES[placeholderIdx % PLACEHOLDER_EXAMPLES.length]}
           className="glass-panel search-input"
           style={{ paddingLeft: '20px' }}
         />
@@ -217,7 +210,7 @@ export default function AiSearchBar({ onSearch, defaultLocation }: { onSearch: (
           <textarea 
             value={requirements}
             onChange={(e) => setRequirements(e.target.value)}
-            placeholder="Any specific requirements? (e.g. Cheap unisex PG under 5000 with AC and WiFi)"
+            placeholder={TEXTAREA_PLACEHOLDERS[placeholderIdx % TEXTAREA_PLACEHOLDERS.length]}
             className="glass-panel search-textarea"
             rows={2}
           />
@@ -245,7 +238,7 @@ export default function AiSearchBar({ onSearch, defaultLocation }: { onSearch: (
 
       {/* Quick Suggestion Chips */}
       <div className="suggestion-chips">
-        {SUGGESTION_CHIPS.map((chip, i) => (
+        {shuffledChips.map((chip, i) => (
           <button
             key={i}
             type="button"

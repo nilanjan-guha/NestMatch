@@ -2,10 +2,11 @@
 import { useState } from 'react';
 import MediaCarousel from './MediaCarousel';
 import { toast } from 'react-hot-toast';
+import ReviewsSection from './ReviewsSection';
 
-export default function PGCard({ pg, isOwnerView = false, currentUserRole = null }: { pg: any, isOwnerView?: boolean, currentUserRole?: string | null }) {
+export default function PGCard({ pg, isOwnerView = false, currentUserRole = null, initialSaved = false }: { pg: any, isOwnerView?: boolean, currentUserRole?: string | null, initialSaved?: boolean }) {
   const [saving, setSaving] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+  const [isSaved, setIsSaved] = useState(initialSaved);
   const [booking, setBooking] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const isFromAPI = pg.amenities?.includes('Google Maps Verified');
@@ -26,7 +27,7 @@ export default function PGCard({ pg, isOwnerView = false, currentUserRole = null
       const res = await fetch('/api/user/saved', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ property_id: pg._id })
+        body: JSON.stringify({ property_id: pg._id || pg.id, property_data: pg })
       });
       const data = await res.json();
       if (data.success) {
@@ -80,16 +81,13 @@ export default function PGCard({ pg, isOwnerView = false, currentUserRole = null
       >
         <div style={{ position: 'relative' }}>
           <MediaCarousel media={pgMedia} height="200px" objectFit="cover" />
-          
-          {!isOwnerView && !isFromAPI && (
-            <button 
-              onClick={handleSave}
-              disabled={saving}
-              style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)', padding: '8px', borderRadius: '50%', color: 'white', cursor: 'pointer', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', fontSize: '20px' }}
-            >
-              {saving ? '...' : (isSaved ? '❤️' : '🤍')}
-            </button>
-          )}
+          <button 
+            onClick={handleSave}
+            disabled={saving}
+            style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)', padding: '8px', borderRadius: '50%', color: 'white', cursor: 'pointer', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', fontSize: '20px' }}
+          >
+            {saving ? '...' : (isSaved ? '❤️' : '🤍')}
+          </button>
         </div>
         
         <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
@@ -303,6 +301,9 @@ export default function PGCard({ pg, isOwnerView = false, currentUserRole = null
                   </ul>
                 </div>
               </div>
+
+              {/* Our Custom Reviews Section */}
+              <ReviewsSection propertyId={pg._id || pg.id} />
 
               {!isOwnerView && !isFromAPI && (
                 <div style={{ display: 'flex', gap: '15px', marginTop: '40px' }}>

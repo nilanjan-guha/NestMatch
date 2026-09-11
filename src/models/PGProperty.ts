@@ -25,6 +25,7 @@ export interface IPGProperty extends Document {
     room_details: string;
   };
   rating: number;
+  userRatingCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -61,7 +62,8 @@ const PGPropertySchema: Schema = new Schema({
     available_beds: { type: Number, default: 0 },
     room_details: { type: String, default: '' }
   },
-  rating: { type: Number, default: 0 }
+  rating: { type: Number, default: 0 },
+  userRatingCount: { type: Number, default: 0 }
 }, {
   timestamps: true
 });

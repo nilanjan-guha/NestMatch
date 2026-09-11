@@ -19,7 +19,7 @@ export default function WatchlistTable({ properties }: { properties: any[] }) {
       });
       const data = await res.json();
       if (data.success) {
-        window.location.reload();
+        router.refresh();
       } else {
         alert(data.error || 'Failed to remove from watchlist');
         setLoadingId(null);
@@ -45,8 +45,10 @@ export default function WatchlistTable({ properties }: { properties: any[] }) {
             </tr>
           </thead>
           <tbody>
-            {properties.map((pg: any) => (
-              <tr key={pg._id.toString()} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            {properties.filter((pg: any) => pg && pg.name).map((pg: any, index: number) => {
+              const propertyId = (pg?._id || pg?.id || `unknown-${index}`).toString();
+              return (
+              <tr key={propertyId} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <td 
                   onClick={() => setSelectedProperty(pg)}
                   style={{ padding: '12px', fontWeight: 'bold', cursor: 'pointer', color: 'var(--primary)' }}
@@ -64,15 +66,16 @@ export default function WatchlistTable({ properties }: { properties: any[] }) {
                     View Details
                   </button>
                   <button 
-                    onClick={() => handleUnsave(pg._id.toString())} 
-                    disabled={loadingId === pg._id.toString()}
-                    style={{ padding: '6px 12px', background: 'rgba(255, 0, 0, 0.2)', border: '1px solid rgba(255, 0, 0, 0.4)', borderRadius: '4px', color: '#ff6b6b', cursor: loadingId === pg._id.toString() ? 'not-allowed' : 'pointer' }}
+                    onClick={() => handleUnsave(propertyId)} 
+                    disabled={loadingId === propertyId}
+                    style={{ padding: '6px 12px', background: 'rgba(255, 0, 0, 0.2)', border: '1px solid rgba(255, 0, 0, 0.4)', borderRadius: '4px', color: '#ff6b6b', cursor: loadingId === propertyId ? 'not-allowed' : 'pointer' }}
                   >
-                    {loadingId === pg._id.toString() ? '...' : 'Remove 💔'}
+                    {loadingId === propertyId ? '...' : 'Remove 💔'}
                   </button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

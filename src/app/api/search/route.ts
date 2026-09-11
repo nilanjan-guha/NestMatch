@@ -298,7 +298,7 @@ export async function POST(req: Request) {
                   
                   // First try: Use Google Search grounding to find real rent prices from the web
                   const snippetResponse = await ai.models.generateContent({
-                    model: 'gemini-3.6-flash',
+                    model: 'gemini-1.5-flash',
                     contents: `You are a real estate data analyst. I need you to find the monthly rent and security deposit for this PG/Hostel accommodation. 
 
 PROPERTY DATA:

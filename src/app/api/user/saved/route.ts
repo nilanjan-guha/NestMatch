@@ -19,11 +19,19 @@ export async function GET() {
     await connectToDatabase();
     
     // Fetch all saved properties for the user, populated with the actual property data
-    const saved = await SavedProperty.find({ user_id: (session.user as any).id })
+    const saved = await SavedProperty.find({ user_id: (session.user as any)._id })
       .populate('property_id')
       .sort({ createdAt: -1 });
 
-    const properties = saved.map(s => s.property_id);
+    const properties = saved.map(s => {
+      // If it's a locally stored PG, property_id is populated as the full object
+      if (s.property_id && typeof s.property_id === 'object' && s.property_id.name) {
+        return s.property_id;
+      }
+      // Otherwise, it's a Google Maps PG cached in property_data
+      return s.property_data;
+    }).filter(Boolean); // Filter out any nulls
+
     return NextResponse.json({ success: true, properties });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -42,13 +50,13 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { property_id } = body;
+    const { property_id, property_data } = body;
     if (!property_id) {
       return NextResponse.json({ error: 'property_id is required' }, { status: 400 });
     }
 
     await connectToDatabase();
-    const user_id = (session.user as any).id;
+    const user_id = (session.user as any)._id;
 
     // Check if it already exists
     const existing = await SavedProperty.findOne({ user_id, property_id });
@@ -59,7 +67,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, saved: false });
     } else {
       // Toggle on (add)
-      await SavedProperty.create({ user_id, property_id });
+      await SavedProperty.create({ user_id, property_id, property_data: property_data || null });
       return NextResponse.json({ success: true, saved: true });
     }
   } catch (error: any) {

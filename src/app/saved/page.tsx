@@ -22,12 +22,16 @@ export default async function SavedPropertiesPage() {
   // Ensure PGProperty model is registered before populating
   PGProperty.schema; 
   
-  const saved = await SavedProperty.find({ user_id: (session.user as any).id })
+  const saved = await SavedProperty.find({ user_id: (session.user as any)._id })
     .populate('property_id')
     .sort({ createdAt: -1 });
 
-  // Filter out any where property_id is null (in case a property was deleted)
-  const properties = saved.map(s => s.property_id).filter(Boolean);
+  const properties = saved.map(s => {
+    if (s.property_id && typeof s.property_id === 'object' && (s.property_id as any).name) {
+      return s.property_id;
+    }
+    return s.property_data;
+  }).filter(Boolean);
 
   return (
     <main className="container" style={{ padding: '40px 24px' }}>

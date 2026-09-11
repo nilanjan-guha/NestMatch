@@ -87,12 +87,12 @@ export default async function Navbar() {
             <>
               {/* Navigation Links Group */}
               <div className="stack-mobile" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Link href="/saved" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--foreground)', textDecoration: 'none', fontWeight: '500', borderRadius: '8px', background: 'var(--surface)', width: '100%', whiteSpace: 'nowrap' }}>
+                  Watchlist ❤️
+                </Link>
+
                 {(isSuperAdmin || dbUser?.onboarded) && (
                   <>
-                    <Link href="/saved" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--foreground)', textDecoration: 'none', fontWeight: '500', borderRadius: '8px', background: 'var(--surface)', width: '100%', whiteSpace: 'nowrap' }}>
-                      Watchlist ❤️
-                    </Link>
-
                     {(!isSuperAdmin && role === 'owner') && (
                       hasProperties ? (
                         <Link href="/owner/dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--foreground)', textDecoration: 'none', fontWeight: '500', borderRadius: '8px', background: 'var(--surface)', width: '100%', whiteSpace: 'nowrap' }}>

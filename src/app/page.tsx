@@ -24,6 +24,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [savedPropertyIds, setSavedPropertyIds] = useState<string[]>([]);
   const [userLocation, setUserLocation] = useState<string>('');
   const [userCoords, setUserCoords] = useState<[number, number] | undefined>(undefined);
   const [page, setPage] = useState(1);
@@ -65,6 +66,16 @@ export default function Home() {
       
       if (location) setUserLocation(location);
       if (coordinates) setUserCoords(coordinates);
+
+      // Fetch saved property IDs
+      fetch('/api/user/saved')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setSavedPropertyIds(data.properties.map((p: any) => p._id || p.id));
+          }
+        })
+        .catch(console.error);
     }
   }, [user]);
 
@@ -201,7 +212,12 @@ export default function Home() {
             
             <div className="grid-auto-fit">
               {sortedPgs.map((pg: any, idx: number) => (
-                <PGCard key={`${pg._id || 'pg'}-${idx}`} pg={pg} currentUserRole={userRole} />
+                <PGCard 
+                  key={`${pg._id || 'pg'}-${idx}`} 
+                  pg={pg} 
+                  currentUserRole={userRole} 
+                  initialSaved={savedPropertyIds.includes(pg._id || pg.id)}
+                />
               ))}
             </div>
             {hasMore && (
