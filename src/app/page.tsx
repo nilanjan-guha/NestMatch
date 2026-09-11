@@ -86,7 +86,8 @@ export default function Home() {
   // Load state from sessionStorage on mount
   useEffect(() => {
     // If it's a page reload, clear the session storage so we start fresh
-    const isReload = window.performance?.getEntriesByType('navigation')?.[0]?.type === 'reload';
+    const navEntries = window.performance?.getEntriesByType('navigation');
+    const isReload = navEntries?.length && (navEntries[0] as PerformanceNavigationTiming).type === 'reload';
     if (isReload) {
       sessionStorage.removeItem('nestMatchSearchState');
     } else {
