@@ -38,8 +38,23 @@ export default async function SavedPropertiesPage() {
     <main className="container" style={{ padding: '40px 24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
         <h1 style={{ fontSize: '32px', margin: 0 }}>My Watchlist</h1>
-        <Link href="/" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '14px' }}>
-          ← Back to Home
+        <Link 
+          href="/" 
+          style={{ 
+            background: 'var(--surface-border)', 
+            color: 'var(--foreground)', 
+            textDecoration: 'none', 
+            fontSize: '14px',
+            padding: '10px 20px',
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'background 0.2s ease'
+          }}
+        >
+          <span>←</span> Back to Search
         </Link>
       </div>
 

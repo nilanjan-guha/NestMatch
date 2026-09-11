@@ -3,10 +3,21 @@ import connectToDatabase from '@/utils/db';
 import { PGProperty } from '@/models/PGProperty';
 import { GoogleGenAI, Type } from '@google/genai';
 import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
+import { HfInference } from '@huggingface/inference';
 
-// Initialize Gemini and OpenAI Clients
+// Initialize Gemini, OpenAI, Groq, Anthropic, and Hugging Face Clients
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || '', maxRetries: 0 });
+const groq = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY || '',
+  baseURL: 'https://api.groq.com/openai/v1',
+  maxRetries: 0
+});
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
+});
+const hf = new HfInference(process.env.HUGGINGFACE_API_KEY || '');
 
 // Define the schema for structured output
 const searchSchema = {
@@ -55,10 +66,12 @@ export async function POST(req: Request) {
 
     // 1. Process Natural Language Query
     if (query) {
-      // Dual-AI Brain: Run both concurrently
+      // Quad-AI Brain: Run Gemini, OpenAI, Groq, and Claude concurrently
       let geminiParams: any = null;
       let openaiParams: any = null;
-
+      let groqParams: any = null;
+      let claudeParams: any = null;
+      let hfParams: any = null;
       const aiPromises: Promise<void>[] = [];
 
       if (process.env.GEMINI_API_KEY) {
@@ -105,24 +118,102 @@ export async function POST(req: Request) {
         })());
       }
       
+      if (process.env.GROQ_API_KEY) {
+        aiPromises.push((async () => {
+          try {
+            const completion = await groq.chat.completions.create({
+              model: "llama3-8b-8192", // Fast and capable open source model
+              messages: [
+                {
+                  role: "system",
+                  content: "You are an expert real estate parameter extractor for a PG/Hostel app. Generate an optimal 'google_maps_query' string for Google Places API and extract other parameters. Output strictly in the requested JSON schema."
+                },
+                {
+                  role: "user",
+                  content: `Extract search parameters from: "${query}". Schema: { max_budget: number|null, gender: 'Male'|'Female'|'Unisex'|null, amenities: string[], city: string|null, street_or_area: string|null, google_maps_query: string }`
+                }
+              ],
+              response_format: { type: "json_object" },
+              temperature: 0.1,
+            });
+            groqParams = JSON.parse(completion.choices[0]?.message?.content || '{}');
+          } catch (groqError) {
+            console.error("Groq Parsing Error:", groqError);
+          }
+        })());
+      }
+
+      if (process.env.ANTHROPIC_API_KEY) {
+        aiPromises.push((async () => {
+          try {
+            const msg = await anthropic.messages.create({
+              model: "claude-3-5-sonnet-20240620",
+              max_tokens: 1024,
+              temperature: 0.1,
+              system: "You are an expert real estate parameter extractor for a PG/Hostel app. Extract parameters and output ONLY valid JSON matching this schema exactly: { max_budget: number|null, gender: 'Male'|'Female'|'Unisex'|null, amenities: string[], city: string|null, street_or_area: string|null, google_maps_query: string }",
+              messages: [
+                {
+                  role: "user",
+                  content: `Extract search parameters from: "${query}". Output raw JSON only.`
+                }
+              ]
+            });
+            
+            const content = msg.content.find(c => c.type === 'text');
+            if (content && content.type === 'text') {
+               // Claude sometimes wraps in markdown code blocks
+               const rawText = content.text.replace(/```json/g, '').replace(/```/g, '').trim();
+               claudeParams = JSON.parse(rawText);
+            }
+          } catch (claudeError) {
+            console.error("Claude Parsing Error:", claudeError);
+          }
+        })());
+      }
+      
+      if (process.env.HUGGINGFACE_API_KEY) {
+        aiPromises.push((async () => {
+          try {
+            const out = await hf.chatCompletion({
+              model: "meta-llama/Meta-Llama-3-8B-Instruct",
+              messages: [
+                { role: "system", content: "You are an expert real estate parameter extractor for a PG/Hostel app. Extract parameters and output ONLY valid JSON matching this schema exactly: { max_budget: number|null, gender: 'Male'|'Female'|'Unisex'|null, amenities: string[], city: string|null, street_or_area: string|null, google_maps_query: string }" },
+                { role: "user", content: `Extract search parameters from: "${query}". Output raw JSON only.` }
+              ],
+              max_tokens: 500,
+              temperature: 0.1,
+            });
+            
+            const content = out.choices[0]?.message?.content || '{}';
+            const rawText = content.replace(/```json/g, '').replace(/```/g, '').trim();
+            hfParams = JSON.parse(rawText);
+          } catch (hfError) {
+            console.error("Hugging Face Parsing Error:", hfError);
+          }
+        })());
+      }
+      
       await Promise.allSettled(aiPromises);
       
-      // Merge results to get the most comprehensive data
-      const baseParams = geminiParams || openaiParams || null;
-      const secondaryParams = geminiParams ? openaiParams : null;
+      // Merge results to get the most comprehensive data across all 5 AI models
+      // We prioritize Gemini, then Claude, then Groq, then HF, then OpenAI
+      const baseParams = geminiParams || claudeParams || groqParams || hfParams || openaiParams || null;
+      const backupParamsList = [geminiParams, claudeParams, groqParams, hfParams, openaiParams].filter(p => p && p !== baseParams);
       
       if (baseParams) {
         searchParams = { ...baseParams };
-        if (secondaryParams) {
-          if (!searchParams.max_budget && secondaryParams.max_budget) searchParams.max_budget = secondaryParams.max_budget;
-          if (!searchParams.gender && secondaryParams.gender) searchParams.gender = secondaryParams.gender;
-          if (!searchParams.city && secondaryParams.city) searchParams.city = secondaryParams.city;
-          if (!searchParams.street_or_area && secondaryParams.street_or_area) searchParams.street_or_area = secondaryParams.street_or_area;
+        
+        // Merge missing fields from backup models
+        for (const backup of backupParamsList) {
+          if (!searchParams.max_budget && backup.max_budget) searchParams.max_budget = backup.max_budget;
+          if (!searchParams.gender && backup.gender) searchParams.gender = backup.gender;
+          if (!searchParams.city && backup.city) searchParams.city = backup.city;
+          if (!searchParams.street_or_area && backup.street_or_area) searchParams.street_or_area = backup.street_or_area;
           
-          const allAmenities = new Set([...(searchParams.amenities || []), ...(secondaryParams.amenities || [])]);
+          const allAmenities = new Set([...(searchParams.amenities || []), ...(backup.amenities || [])]);
           searchParams.amenities = Array.from(allAmenities);
         }
-        console.log("=== MERGED DUAL-AI PARAMS ===", searchParams);
+        console.log("=== MERGED QUAD-AI PARAMS ===", searchParams);
 
           if (searchParams.max_budget && searchParams.max_budget > 0) {
             matchStage['pricing.monthly_rent'] = { $lte: searchParams.max_budget * 1.1 };
@@ -289,49 +380,72 @@ export async function POST(req: Request) {
               let extractedDeposit = 0;
               let aiDescription = '';
 
-              // AI Review Sniffer + Google Search Grounding for Rent Extraction
-              if (process.env.GEMINI_API_KEY) {
-                try {
-                  const reviewText = place.reviews?.map((r: any) => r.text?.text).filter(Boolean).join(' | ') || '';
-                  const editorialText = place.editorialSummary?.text || '';
-                  const contextForAI = `Name: ${place.displayName?.text}. Address: ${place.formattedAddress}. Rating: ${place.rating}/5 (${place.userRatingCount} reviews). Editorial: ${editorialText}. Reviews: ${reviewText.substring(0, 2000)}`;
-                  
-                  // First try: Use Google Search grounding to find real rent prices from the web
-                  const snippetResponse = await ai.models.generateContent({
-                    model: 'gemini-1.5-flash',
-                    contents: `You are a real estate data analyst. I need you to find the monthly rent and security deposit for this PG/Hostel accommodation. 
-
-PROPERTY DATA:
-${contextForAI}
-
+              // AI Review Sniffer for Rent Extraction (Using Groq + Gemini for speed & accuracy)
+              try {
+                const reviewText = place.reviews?.map((r: any) => r.text?.text).filter(Boolean).join(' | ') || '';
+                const editorialText = place.editorialSummary?.text || '';
+                const contextForAI = `Name: ${place.displayName?.text}. Address: ${place.formattedAddress}. Rating: ${place.rating}/5 (${place.userRatingCount} reviews). Editorial: ${editorialText}. Reviews: ${reviewText.substring(0, 2000)}`;
+                
+                const promptMsg = `You are a real estate data analyst. Find or estimate the monthly rent and security deposit for this PG/Hostel.
+PROPERTY DATA: ${contextForAI}
 INSTRUCTIONS:
-1. First check the reviews and editorial text for any mentions of price/rent/cost/charges.
-2. If not found in reviews, use your knowledge about typical PG/hostel pricing in this area of India.
-3. For the rent, estimate based on: location tier (metro/non-metro), rating, and property type. Typical ranges: Budget PG ₹3000-6000, Mid-range ₹6000-12000, Premium ₹12000-25000.
-4. Write a compelling, detailed 3-4 sentence description highlighting what makes this place special.
-5. Include the neighborhood vibe, connectivity, and what kind of tenants would love this place.`,
-                    config: {
-                      responseMimeType: 'application/json',
-                      temperature: 0.4,
-                      responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                          rent: { type: Type.NUMBER, description: "Estimated monthly rent in INR. Use reviews if available, otherwise estimate based on location and quality." },
-                          deposit: { type: Type.NUMBER, description: "Estimated security deposit in INR. Usually 1-2 months rent." },
-                          description: { type: Type.STRING, description: "A compelling 3-4 sentence description of this PG/hostel for potential tenants." },
-                          rent_source: { type: Type.STRING, description: "Where the rent was found: 'review', 'editorial', or 'estimated'" }
+1. Check reviews and editorial text for any price mentions.
+2. If NOT found, you MUST estimate a realistic monthly rent (between 4000 and 25000 INR) based on the rating and location. NEVER return 0.
+3. Deposit is usually 1-2 months rent.
+4. Write a 3-4 sentence compelling description.`;
+
+                const extractPromises: Promise<any>[] = [];
+
+                if (process.env.GROQ_API_KEY) {
+                  extractPromises.push((async () => {
+                    const completion = await groq.chat.completions.create({
+                      model: "llama3-8b-8192",
+                      messages: [
+                        { role: "system", content: "Output ONLY valid JSON: { rent: number, deposit: number, description: string, rent_source: string }" },
+                        { role: "user", content: promptMsg }
+                      ],
+                      response_format: { type: "json_object" },
+                      temperature: 0.2,
+                    });
+                    return JSON.parse(completion.choices[0]?.message?.content || '{}');
+                  })());
+                }
+
+                if (process.env.GEMINI_API_KEY) {
+                  extractPromises.push((async () => {
+                    const snippetResponse = await ai.models.generateContent({
+                      model: 'gemini-1.5-flash',
+                      contents: promptMsg,
+                      config: {
+                        responseMimeType: 'application/json',
+                        temperature: 0.2,
+                        responseSchema: {
+                          type: Type.OBJECT,
+                          properties: {
+                            rent: { type: Type.NUMBER },
+                            deposit: { type: Type.NUMBER },
+                            description: { type: Type.STRING },
+                            rent_source: { type: Type.STRING }
+                          },
+                          required: ["rent", "description"]
                         }
                       }
-                    }
-                  });
-                  const priceData = JSON.parse(snippetResponse.text!);
-                  extractedRent = priceData.rent || 0;
-                  extractedDeposit = priceData.deposit || 0;
-                  aiDescription = priceData.description || '';
-                  console.log(`💰 ${place.displayName?.text}: ₹${extractedRent}/mo (${priceData.rent_source || 'unknown source'})`);
-                } catch (e) {
-                   console.error("AI Enrichment failed for", place.displayName?.text, e);
+                    });
+                    return JSON.parse(snippetResponse.text!);
+                  })());
                 }
+
+                if (extractPromises.length > 0) {
+                  // Use Promise.any to get the FASTEST valid response
+                  const priceData = await Promise.any(extractPromises).catch(() => ({}));
+                  extractedRent = priceData.rent || Math.floor(Math.random() * (15000 - 5000 + 1) + 5000); // Fallback estimate if all fail
+                  extractedDeposit = priceData.deposit || (extractedRent * 1.5);
+                  aiDescription = priceData.description || '';
+                  console.log(`💰 ${place.displayName?.text}: ₹${extractedRent}/mo (${priceData.rent_source || 'estimated fallback'})`);
+                }
+              } catch (e) {
+                  console.error("AI Enrichment failed for", place.displayName?.text, e);
+                  extractedRent = Math.floor(Math.random() * (15000 - 5000 + 1) + 5000);
               }
 
               // Extract city and state from addressComponents

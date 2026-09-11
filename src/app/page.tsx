@@ -31,6 +31,7 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [currentQuery, setCurrentQuery] = useState('');
+  const [loadingText, setLoadingText] = useState('Searching the database...');
   const [sortBy, setSortBy] = useState<string>('recommended');
   const [hasSearched, setHasSearched] = useState(false);
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -144,6 +145,28 @@ export default function Home() {
     }
   }, [pgs, hasSearched, currentQuery, sortBy, userCoords, hasMore, page]);
 
+  // Shuffle loading text
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (loading) {
+      const texts = [
+        "Analyzing your request...",
+        "Scanning Google Places...",
+        "Extracting AI Data...",
+        "Finding the best matches...",
+        "Applying filters...",
+        "Almost there..."
+      ];
+      let i = 0;
+      setLoadingText(texts[0]);
+      interval = setInterval(() => {
+        i = (i + 1) % texts.length;
+        setLoadingText(texts[i]);
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
+
   const handleSearch = async (query: string, coordinates?: [number, number]) => {
     setLoading(true);
     setCurrentQuery(query);
@@ -217,8 +240,8 @@ export default function Home() {
       <section className="container" id="results-section" ref={resultsRef} style={{ paddingBottom: '60px' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '50px', color: 'var(--text-muted)' }}>
-            <div style={{ fontSize: '40px', marginBottom: '16px', animation: 'fadeInUp 0.5s ease' }}>🔍</div>
-            <p style={{ fontSize: '16px' }}>Searching the database...</p>
+            <div style={{ fontSize: '40px', marginBottom: '16px', display: 'inline-block' }} className="spin-animation">🔍</div>
+            <p style={{ fontSize: '16px', transition: 'all 0.3s ease' }}>{loadingText}</p>
           </div>
         ) : pgs.length > 0 ? (
           <>
@@ -265,8 +288,8 @@ export default function Home() {
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
-                <div style={{ flex: '1 1 500px', minWidth: 0 }}>
+              <div className="results-container" style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '24px', alignItems: 'start' }}>
+                <div style={{ minWidth: 0 }}>
                   <div className="grid-auto-fit" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                     {sortedPgs.map((pg: any, idx: number) => {
                       const id = pg._id || pg.id;
@@ -300,7 +323,7 @@ export default function Home() {
                 </div>
                 
                 {/* Interactive Map */}
-                <div className="map-wrapper">
+                <div className="map-wrapper" style={{ position: 'sticky', top: '20px', height: 'calc(100vh - 100px)', borderRadius: '16px', overflow: 'hidden' }}>
                   <InteractiveMap 
                     pgs={sortedPgs} 
                     hoveredPgId={hoveredPgId} 
