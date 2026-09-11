@@ -53,7 +53,7 @@ export default function PGDetailsModal({
 
         {/* Media Scroller */}
         <div style={{ borderRadius: '12px 12px 0 0', overflow: 'hidden' }}>
-          <MediaCarousel media={pgMedia} height="400px" objectFit="cover" disableFullScreen={true} />
+          <MediaCarousel media={pgMedia} height="400px" objectFit="cover" />
         </div>
 
         {/* Content Details */}

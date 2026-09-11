@@ -287,49 +287,48 @@ export default function Home() {
               </div>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div className="results-container" style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '24px', alignItems: 'start' }}>
-                <div style={{ minWidth: 0 }}>
-                  <div className="grid-auto-fit" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-                    {sortedPgs.map((pg: any, idx: number) => {
-                      const id = pg._id || pg.id;
-                      return (
-                        <PGCard 
-                          key={`${id}-${idx}`} 
-                          pg={pg} 
-                          currentUserRole={userRole} 
-                          initialSaved={savedPropertyIds.includes(id)}
-                          onMouseEnter={() => setHoveredPgId(id)}
-                          onMouseLeave={() => setHoveredPgId(null)}
-                        />
-                      );
-                    })}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+              {/* Interactive Map on Top */}
+              <div className="map-wrapper" style={{ width: '100%', height: '400px', borderRadius: '16px', overflow: 'hidden' }}>
+                <InteractiveMap 
+                  pgs={sortedPgs} 
+                  hoveredPgId={hoveredPgId} 
+                  userCoords={userCoords}
+                />
+              </div>
+
+              {/* Cards Grid Full Width */}
+              <div style={{ width: '100%' }}>
+                <div className="grid-auto-fit" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
+                  {sortedPgs.map((pg: any, idx: number) => {
+                    const id = pg._id || pg.id;
+                    return (
+                      <PGCard 
+                        key={`${id}-${idx}`} 
+                        pg={pg} 
+                        currentUserRole={userRole} 
+                        initialSaved={savedPropertyIds.includes(id)}
+                        onMouseEnter={() => setHoveredPgId(id)}
+                        onMouseLeave={() => setHoveredPgId(null)}
+                      />
+                    );
+                  })}
+                </div>
+                {hasMore && (
+                  <div style={{ textAlign: 'center', marginTop: '40px' }}>
+                    <button 
+                      onClick={loadMore} 
+                      disabled={loadingMore}
+                      className="load-more-btn"
+                    >
+                      {loadingMore ? (
+                        <>⏳ Loading more...</>
+                      ) : (
+                        <>Showing {pgs.length} results • Load More ↓</>
+                      )}
+                    </button>
                   </div>
-                  {hasMore && (
-                    <div style={{ textAlign: 'center', marginTop: '40px' }}>
-                      <button 
-                        onClick={loadMore} 
-                        disabled={loadingMore}
-                        className="load-more-btn"
-                      >
-                        {loadingMore ? (
-                          <>⏳ Loading more...</>
-                        ) : (
-                          <>Showing {pgs.length} results • Load More ↓</>
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Interactive Map */}
-                <div className="map-wrapper" style={{ position: 'sticky', top: '20px', height: 'calc(100vh - 100px)', borderRadius: '16px', overflow: 'hidden' }}>
-                  <InteractiveMap 
-                    pgs={sortedPgs} 
-                    hoveredPgId={hoveredPgId} 
-                    userCoords={userCoords}
-                  />
-                </div>
+                )}
               </div>
             </div>
           </>

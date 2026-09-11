@@ -75,7 +75,7 @@ export default async function Navbar() {
         <Link href="/" style={{ fontSize: '24px', fontWeight: 'bold', textDecoration: 'none', color: 'var(--foreground)', display: 'flex', alignItems: 'center', gap: '10px' }}>
           NestMatch
         </Link>
-        
+
         {/* Checkbox Hack for Mobile Menu */}
         <input type="checkbox" id="mobile-menu-toggle" style={{ display: 'none' }} />
         <label htmlFor="mobile-menu-toggle" className="mobile-menu-btn">
@@ -100,7 +100,7 @@ export default async function Navbar() {
                         </Link>
                       ) : (
                         <Link href="/owner/add" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', borderRadius: '8px', color: 'white', textDecoration: 'none', fontWeight: '500', width: '100%', whiteSpace: 'nowrap' }}>
-                          Create your PG
+                          List your PG
                         </Link>
                       )
                     )}

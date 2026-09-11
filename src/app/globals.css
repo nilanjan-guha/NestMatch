@@ -99,14 +99,6 @@ body {
   gap: 24px;
 }
 
-/* Map Wrapper */
-.map-wrapper {
-  flex: 1 1 400px;
-  min-width: 300px;
-  position: sticky;
-  top: 100px;
-  height: calc(100vh - 120px);
-}
 
 /* Custom Scrollbar Styles */
 ::-webkit-scrollbar {
@@ -270,15 +262,6 @@ body {
     border-radius: 8px;
   }
 
-  /* Map Wrapper Responsive */
-  .map-wrapper {
-    position: relative !important;
-    top: 0 !important;
-    height: 350px !important;
-    width: 100% !important;
-    margin-bottom: 20px;
-    flex: 1 1 100% !important;
-  }
 
   /* CSS Checkbox Hack for Navbar */
   .mobile-menu-btn {
@@ -818,6 +801,23 @@ body {
   .suggestion-chip {
     padding: 8px 14px;
     font-size: 12px;
+  }
+
+  .container {
+    padding: 0 16px;
+  }
+
+  .grid-auto-fit {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  .map-wrapper {
+    height: 300px !important;
+  }
+
+  .glass-panel {
+    padding: 16px !important;
   }
 }
 

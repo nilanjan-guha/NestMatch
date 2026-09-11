@@ -97,7 +97,7 @@ export default function PGCard({
         }}
       >
         <div style={{ position: 'relative' }}>
-          <MediaCarousel media={pgMedia} height="200px" objectFit="cover" />
+          <MediaCarousel media={pgMedia} height="200px" objectFit="cover" disableFullScreen={true} />
           <button 
             onClick={handleSave}
             disabled={saving}

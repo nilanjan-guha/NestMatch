@@ -43,10 +43,12 @@ export default function MediaCarousel({
           key={currentMedia}
           src={currentMedia} 
           controls 
-          style={{ width: '100%', height: '100%', objectFit, animation: 'fadeIn 0.3s ease-in-out', cursor: disableFullScreen ? 'default' : 'pointer' }}
+          style={{ width: '100%', height: '100%', objectFit, animation: 'fadeIn 0.3s ease-in-out', cursor: disableFullScreen ? 'pointer' : 'zoom-in' }}
           onClick={(e) => { 
-            e.stopPropagation(); 
-            if (!disableFullScreen) setFullScreen(true); 
+            if (!disableFullScreen) {
+              e.stopPropagation(); 
+              setFullScreen(true); 
+            }
           }}
         />
       ) : (
@@ -54,10 +56,12 @@ export default function MediaCarousel({
           key={currentMedia}
           src={currentMedia} 
           alt={`Media ${currentIndex + 1}`} 
-          style={{ width: '100%', height: '100%', objectFit, animation: 'fadeIn 0.3s ease-in-out', cursor: disableFullScreen ? 'default' : 'pointer' }}
+          style={{ width: '100%', height: '100%', objectFit, animation: 'fadeIn 0.3s ease-in-out', cursor: disableFullScreen ? 'pointer' : 'zoom-in' }}
           onClick={(e) => { 
-            e.stopPropagation(); 
-            if (!disableFullScreen) setFullScreen(true); 
+            if (!disableFullScreen) {
+              e.stopPropagation(); 
+              setFullScreen(true); 
+            }
           }}
         />
       )}
