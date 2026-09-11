@@ -55,6 +55,13 @@ export default function Home() {
   // Fetch Session from Clerk user object
   useEffect(() => {
     if (user) {
+      // Handle user change to reset search state on logout/login with different account
+      const lastUserId = sessionStorage.getItem('nestMatchUserId');
+      if (lastUserId && lastUserId !== user.id) {
+        sessionStorage.removeItem('nestMatchSearchState');
+      }
+      sessionStorage.setItem('nestMatchUserId', user.id);
+
       const role = user.publicMetadata?.role as string;
       setUserRole(role || 'USER');
       const location = user.publicMetadata?.location as string;
@@ -72,6 +79,10 @@ export default function Home() {
           }
         })
         .catch(console.error);
+    } else if (user === null) {
+      // User is logged out
+      sessionStorage.removeItem('nestMatchSearchState');
+      sessionStorage.removeItem('nestMatchUserId');
     }
   }, [user]);
 

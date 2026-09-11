@@ -6,6 +6,7 @@ import ThemeToggle from './ThemeToggle';
 import connectToDatabase from '@/utils/db';
 import { PGProperty } from '@/models/PGProperty';
 import { SavedProperty } from '@/models/SavedProperty';
+import OnboardingRedirect from './OnboardingRedirect';
 
 export default async function Navbar() {
   const { userId } = await auth();
@@ -70,8 +71,10 @@ export default async function Navbar() {
   }
 
   return (
-    <nav style={{ padding: '20px 24px', borderBottom: '1px solid var(--surface-border)', background: 'var(--background-transparent)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 100 }}>
-      <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <>
+      {userId && dbUser && !dbUser.onboarded && !isSuperAdmin && <OnboardingRedirect />}
+      <nav style={{ padding: '20px 24px', borderBottom: '1px solid var(--surface-border)', background: 'var(--background-transparent)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Link href="/" style={{ fontSize: '24px', fontWeight: 'bold', textDecoration: 'none', color: 'var(--foreground)', display: 'flex', alignItems: 'center', gap: '10px' }}>
           NestMatch
         </Link>
@@ -145,5 +148,6 @@ export default async function Navbar() {
         </div>
       </div>
     </nav>
+    </>
   );
 }
