@@ -342,7 +342,7 @@ html, body {
   border-radius: 25px;
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
   backdrop-filter: blur(6px);
   white-space: nowrap;
 }
@@ -403,7 +403,7 @@ html, body {
   border-radius: 20px;
   padding: 40px 24px;
   text-align: center;
-  transition: all 0.4s ease;
+  transition: transform 0.4s ease, opacity 0.4s ease, background-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
   position: relative;
   overflow: hidden;
 }
@@ -492,7 +492,7 @@ html, body {
   border-radius: 16px;
   padding: 24px 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
   text-align: left;
   display: flex;
   align-items: center;
@@ -559,7 +559,7 @@ html, body {
   border-radius: 20px;
   padding: 32px 20px;
   text-align: center;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .feature-card:hover {
@@ -697,7 +697,7 @@ html, body {
   cursor: pointer;
   font-weight: 700;
   font-size: 15px;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
   display: inline-flex;
   align-items: center;
   gap: 10px;

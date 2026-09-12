@@ -115,7 +115,7 @@ export default function PGCard({
           
           {onCompareToggle && (
             <div 
-              style={{ position: 'absolute', top: '15px', left: '15px', background: isCompared ? 'var(--primary)' : 'rgba(0,0,0,0.6)', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: isCompared ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.3)', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+              style={{ position: 'absolute', top: '15px', left: '15px', background: isCompared ? 'var(--primary)' : 'rgba(0,0,0,0.6)', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: isCompared ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.3)', backdropFilter: 'blur(8px)', transition: 'transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
               onClick={(e) => {
                 e.stopPropagation();
                 onCompareToggle(pg);

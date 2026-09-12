@@ -242,7 +242,7 @@ export default function AiSearchBar({
           cursor: 'pointer',
           alignSelf: 'flex-start',
           fontSize: '14px',
-          transition: 'all 0.3s ease'
+          transition: 'background 0.3s ease'
         }}
         onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
         onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
@@ -276,7 +276,7 @@ export default function AiSearchBar({
             fontWeight: 'bold',
             fontSize: '18px',
             boxShadow: '0 4px 15px rgba(var(--primary-rgb), 0.3)',
-            transition: 'all 0.3s ease'
+            transition: 'transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease'
           }}
         >
           🔍 Find My PG
