@@ -229,6 +229,7 @@ body {
   .grid-stack-mobile, .grid-auto-fit {
     grid-template-columns: 1fr !important;
   }
+
   
   /* Visibility Toggles */
   .hide-mobile {
@@ -830,3 +831,22 @@ body {
 .spin-animation {
   animation: smoothSpin 2s linear infinite;
 }
+
+/* Small Mobile View (< 480px) */
+@media (max-width: 480px) {
+  body, p, .search-textarea, .suggestion-chip, .feature-card p, .step-card p {
+    font-size: 13px !important;
+  }
+  h1, .hero-title { font-size: 28px !important; }
+  h2, .section-title { font-size: 22px !important; }
+  h3 { font-size: 16px !important; }
+  
+  .hero-subtitle, .section-subtitle {
+    font-size: 14px !important;
+  }
+
+  .stat-number {
+    font-size: 26px !important;
+  }
+}
+

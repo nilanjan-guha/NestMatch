@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 export default function PGDetailsClient({ pg }: { pg: any }) {
   const [saving, setSaving] = useState(false);
   const [booking, setBooking] = useState(false);
+  const [visitDate, setVisitDate] = useState('');
   const isSaved = false; // Add real logic if needed
 
   const handleSave = () => {
@@ -14,7 +15,11 @@ export default function PGDetailsClient({ pg }: { pg: any }) {
   };
 
   const handleBook = () => {
-    toast.success('Booking Interest Registered!');
+    if (!visitDate) {
+      toast.error('Please select a visit date!');
+      return;
+    }
+    toast.success(`Visit scheduled for ${visitDate}! The owner has been notified.`);
   };
 
   return (
@@ -57,14 +62,33 @@ export default function PGDetailsClient({ pg }: { pg: any }) {
             </a>
           )}
           {pg.owner_id?.phone && (
-            <a href={`tel:${pg.owner_id.phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', padding: '10px 18px', borderRadius: '10px', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold' }}>
-              📞 Call {pg.owner_id.phone}
-            </a>
+            <>
+              <a href={`tel:${pg.owner_id.phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', padding: '10px 18px', borderRadius: '10px', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold' }}>
+                📞 Call {pg.owner_id.phone}
+              </a>
+              <a href={`https://wa.me/91${pg.owner_id.phone}?text=Hi, I am interested in your property ${pg.name} listed on NestMatch.`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.3)', color: '#25D366', padding: '10px 18px', borderRadius: '10px', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold' }}>
+                💬 WhatsApp
+              </a>
+            </>
           )}
           <button 
-            onClick={() => {
-              navigator.clipboard.writeText(window.location.href);
-              toast.success('Link copied to clipboard!');
+            onClick={async () => {
+              const shareData = {
+                title: pg.name,
+                text: `Check out this property on NestMatch: ${pg.name}`,
+                url: window.location.href
+              };
+              if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                try {
+                  await navigator.share(shareData);
+                } catch (err) {
+                  navigator.clipboard.writeText(window.location.href);
+                  toast.success('Link copied to clipboard!');
+                }
+              } else {
+                navigator.clipboard.writeText(window.location.href);
+                toast.success('Link copied to clipboard!');
+              }
             }}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', color: '#3b82f6', padding: '10px 18px', borderRadius: '10px', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer' }}
           >
@@ -102,13 +126,23 @@ export default function PGDetailsClient({ pg }: { pg: any }) {
         {/* Reviews */}
         <ReviewsSection propertyId={pg._id || pg.id} />
 
-        <div style={{ display: 'flex', gap: '15px', marginTop: '40px' }}>
+        <div style={{ display: 'flex', gap: '15px', marginTop: '40px', alignItems: 'center' }}>
           <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '16px', background: isSaved ? 'rgba(239, 68, 68, 0.1)' : 'var(--surface)', border: `1px solid ${isSaved ? 'rgba(239, 68, 68, 0.3)' : 'var(--surface-border)'}`, color: isSaved ? '#ef4444' : 'var(--foreground)', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer' }}>
             {saving ? '...' : (isSaved ? '💔 Remove from Watchlist' : '❤️ Save for Later')}
           </button>
-          <button onClick={handleBook} disabled={booking} style={{ flex: 2, padding: '16px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', color: 'white', border: 'none', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer' }}>
-            {booking ? 'Registering...' : 'Book Visit'}
-          </button>
+          
+          <div style={{ flex: 1.5, display: 'flex', gap: '10px' }}>
+            <input 
+              type="date" 
+              value={visitDate}
+              onChange={(e) => setVisitDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+              style={{ flex: 1, padding: '16px', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)', fontSize: '16px' }}
+            />
+            <button onClick={handleBook} disabled={booking} style={{ flex: 1.5, padding: '16px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', color: 'white', border: 'none', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer' }}>
+              {booking ? 'Scheduling...' : '📅 Schedule Visit'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

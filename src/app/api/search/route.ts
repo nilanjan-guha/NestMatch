@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/utils/db';
 import { PGProperty } from '@/models/PGProperty';
+import { User } from '@/models/User';
+import { auth } from '@clerk/nextjs/server';
 import { GoogleGenAI, Type } from '@google/genai';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
@@ -59,6 +61,21 @@ export async function POST(req: Request) {
     let matchStage: any = {};
     let searchParams: any = {};
     let baseParams: any = null;
+
+    // Save recent search if user is authenticated
+    if (query) {
+      try {
+        const { userId } = await auth();
+        if (userId) {
+          await User.findOneAndUpdate(
+            { clerkId: userId },
+            { $push: { recent_searches: { $each: [query], $slice: -10, $position: 0 } } }
+          );
+        }
+      } catch (e) {
+        console.error("Failed to save recent search", e);
+      }
+    }
 
     console.log("=== SEARCH REQUEST ===");
     console.log("Query:", query);

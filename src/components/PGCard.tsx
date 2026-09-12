@@ -118,28 +118,22 @@ export default function PGCard({
           <MediaCarousel media={pgMedia} height="200px" objectFit="cover" disableFullScreen={true} />
           
           {onCompareToggle && (
-            <div style={{ position: 'absolute', top: '15px', left: '15px', display: 'flex', gap: '10px', flexDirection: 'column' }}>
-              <div 
-                style={{ background: isCompared ? 'var(--primary)' : 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(5px)' }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCompareToggle(pg);
-                }}
-              >
-                <input type="checkbox" checked={isCompared} onChange={() => {}} style={{ cursor: 'pointer' }} />
-                Compare
-              </div>
-              <div style={{ background: 'rgba(255, 61, 144, 0.9)', padding: '4px 10px', borderRadius: '12px', fontSize: '10px', fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', animation: 'pulse 2s infinite' }}>
-                <span style={{ display: 'inline-block', width: '6px', height: '6px', background: 'white', borderRadius: '50%' }}></span> {activeViewers} people looking
-              </div>
+            <div 
+              style={{ position: 'absolute', top: '15px', left: '15px', background: isCompared ? 'var(--primary)' : 'rgba(0,0,0,0.6)', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: isCompared ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.3)', backdropFilter: 'blur(8px)', transition: 'all 0.2s ease', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onCompareToggle(pg);
+              }}
+            >
+              <input type="checkbox" checked={isCompared} onChange={() => {}} style={{ cursor: 'pointer', accentColor: 'white' }} />
+              Compare
             </div>
           )}
 
-          {!onCompareToggle && (
-            <div style={{ position: 'absolute', top: '15px', left: '15px', background: 'rgba(255, 61, 144, 0.9)', padding: '4px 10px', borderRadius: '12px', fontSize: '10px', fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', animation: 'pulse 2s infinite' }}>
-              <span style={{ display: 'inline-block', width: '6px', height: '6px', background: 'white', borderRadius: '50%' }}></span> {activeViewers} people looking
-            </div>
-          )}
+          {/* Moved activeViewers to the bottom-left of the image to prevent clutter */}
+          <div style={{ position: 'absolute', bottom: '15px', left: '15px', background: 'rgba(255, 61, 144, 0.95)', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '5px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', animation: 'pulse 2s infinite', backdropFilter: 'blur(4px)' }}>
+            <span style={{ display: 'inline-block', width: '6px', height: '6px', background: 'white', borderRadius: '50%' }}></span> {activeViewers} people looking
+          </div>
 
           <button 
             onClick={handleSave}

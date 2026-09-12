@@ -10,6 +10,7 @@ export interface IUser extends Document {
   coordinates?: [number, number]; // [longitude, latitude]
   role: 'searcher' | 'owner' | 'admin';
   onboarded: boolean;
+  recent_searches?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,6 +25,7 @@ const UserSchema: Schema = new Schema({
   coordinates: { type: [Number], required: false }, // [longitude, latitude]
   role: { type: String, enum: ['searcher', 'owner', 'admin'], default: 'searcher' },
   onboarded: { type: Boolean, default: false },
+  recent_searches: { type: [String], default: [] },
 }, {
   timestamps: true 
 });

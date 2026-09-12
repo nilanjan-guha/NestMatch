@@ -23,6 +23,7 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [displaySearches, setDisplaySearches] = useState<typeof POPULAR_SEARCHES>([]);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [currentQuery, setCurrentQuery] = useState('');
   const [loadingText, setLoadingText] = useState('Searching the database...');
   const [sortBy, setSortBy] = useState<string>('recommended');
@@ -39,6 +40,7 @@ export default function Home() {
   // Compare State
   const [compareList, setCompareList] = useState<any[]>([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -91,6 +93,12 @@ export default function Home() {
         const priceB = (b.pricing?.monthly_rent && b.pricing.monthly_rent > 0) ? b.pricing.monthly_rent : 999999;
         return priceA - priceB;
       });
+    } else if (sortBy === 'rating') {
+      sorted.sort((a, b) => {
+        const ratingA = a.rating || 0;
+        const ratingB = b.rating || 0;
+        return ratingB - ratingA;
+      });
     }
     return sorted;
   };
@@ -121,6 +129,16 @@ export default function Home() {
         .then(data => {
           if (data.success) {
             setSavedPropertyIds(data.properties.map((p: any) => p._id || p.id));
+          }
+        })
+        .catch(console.error);
+
+      // Fetch recent searches
+      fetch('/api/user/recent-searches')
+        .then(res => res.json())
+        .then(data => {
+          if (data.recent_searches) {
+            setRecentSearches(data.recent_searches);
           }
         })
         .catch(console.error);
@@ -355,10 +373,30 @@ export default function Home() {
                 overflowX: 'auto',
                 whiteSpace: 'nowrap'
               }}>
+                <button
+                  onClick={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
+                  style={{
+                    background: 'var(--surface-hover)',
+                    color: 'var(--foreground)',
+                    border: '1px solid var(--surface-border)',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    marginRight: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  {viewMode === 'list' ? '🗺️ Show Map' : '📋 Show List'}
+                </button>
                 {[
                   { id: 'recommended', label: '✨ AI Recommended' },
                   { id: 'distance', label: '📍 Nearest' },
-                  { id: 'price_low_high', label: '💰 Lowest Price' }
+                  { id: 'price_low_high', label: '💰 Lowest Price' },
+                  { id: 'rating', label: '⭐ Highest Rating' }
                 ].map(option => (
                   <button
                     key={option.id}
@@ -383,50 +421,55 @@ export default function Home() {
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-              {/* Interactive Map on Top */}
-              <div className="map-wrapper" style={{ width: '100%', height: '400px', borderRadius: '16px', overflow: 'hidden' }}>
-                <InteractiveMap 
-                  pgs={sortedPgs} 
-                  hoveredPgId={hoveredPgId} 
-                  userCoords={userCoords}
-                />
-              </div>
-
-              {/* Cards Grid Full Width */}
-              <div style={{ width: '100%' }}>
-                <div className="grid-auto-fit" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
-                  {sortedPgs.map((pg: any, idx: number) => {
-                    const id = pg._id || pg.id;
-                    const isCompared = compareList.some(c => (c._id || c.id) === id);
-                    return (
-                      <PGCard 
-                        key={`${id}-${idx}`} 
-                        pg={pg} 
-                        currentUserRole={userRole} 
-                        initialSaved={savedPropertyIds.includes(id)}
-                        onMouseEnter={() => setHoveredPgId(id)}
-                        onMouseLeave={() => setHoveredPgId(null)}
-                        isCompared={isCompared}
-                        onCompareToggle={(selectedPg) => {
-                          setCompareList(prev => {
-                            const exists = prev.some(c => (c._id || c.id) === (selectedPg._id || selectedPg.id));
-                            if (exists) {
-                              return prev.filter(c => (c._id || c.id) !== (selectedPg._id || selectedPg.id));
-                            } else {
-                              if (prev.length >= 3) {
-                                alert("You can only compare up to 3 PGs at a time.");
-                                return prev;
-                              }
-                              return [...prev, selectedPg];
-                            }
-                          });
-                        }}
-                      />
-                    );
-                  })}
+              {sortedPgs.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '60px 20px', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--surface-border)' }}>
+                  <span style={{ fontSize: '48px', display: 'block', marginBottom: '15px' }}>🔍</span>
+                  <h3 style={{ fontSize: '24px', color: 'var(--foreground)', marginBottom: '10px' }}>Oops! Perfect match not found.</h3>
+                  <p style={{ color: 'var(--text-muted)', maxWidth: '400px', margin: '0 auto' }}>We couldn't find any PGs matching your exact criteria. Try adjusting your filters or searching for a different location.</p>
                 </div>
-                {hasMore && (
-                  <div style={{ textAlign: 'center', marginTop: '40px' }}>
+              ) : viewMode === 'map' ? (
+                <div className="map-wrapper" style={{ width: '100%', height: 'calc(100vh - 200px)', minHeight: '500px', borderRadius: '16px', overflow: 'hidden' }}>
+                  <InteractiveMap 
+                    pgs={sortedPgs} 
+                    hoveredPgId={hoveredPgId} 
+                    userCoords={userCoords}
+                  />
+                </div>
+              ) : (
+                <div style={{ width: '100%' }}>
+                  <div className="grid-auto-fit" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
+                    {sortedPgs.map((pg: any, idx: number) => {
+                      const id = pg._id || pg.id;
+                      const isCompared = compareList.some(c => (c._id || c.id) === id);
+                      return (
+                        <PGCard 
+                          key={`${id}-${idx}`} 
+                          pg={pg} 
+                          currentUserRole={userRole} 
+                          initialSaved={savedPropertyIds.includes(id)}
+                          onMouseEnter={() => setHoveredPgId(id)}
+                          onMouseLeave={() => setHoveredPgId(null)}
+                          isCompared={isCompared}
+                          onCompareToggle={(selectedPg) => {
+                            setCompareList(prev => {
+                              const exists = prev.some(c => (c._id || c.id) === (selectedPg._id || selectedPg.id));
+                              if (exists) {
+                                return prev.filter(c => (c._id || c.id) !== (selectedPg._id || selectedPg.id));
+                              } else {
+                                if (prev.length >= 3) {
+                                  alert("You can only compare up to 3 PGs at a time.");
+                                  return prev;
+                                }
+                                return [...prev, selectedPg];
+                              }
+                            });
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                  {hasMore && (
+                    <div style={{ textAlign: 'center', marginTop: '40px' }}>
                     <button 
                       onClick={loadMore} 
                       disabled={loadingMore}
@@ -441,6 +484,7 @@ export default function Home() {
                   </div>
                 )}
               </div>
+              )}
             </div>
           </>
         ) : hasSearched ? (
@@ -485,11 +529,11 @@ export default function Home() {
                 </>
               )}
             </div>
-            <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '15px' }}>Or try one of these popular searches:</p>
+            <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '15px' }}>{recentSearches.length > 0 ? "Or try one of your recent searches:" : "Or try one of these popular searches:"}</p>
             <div className="suggestion-chips" style={{ justifyContent: 'center' }}>
-              {['Boys PG in Gurgaon', 'Girls PG with AC', 'Budget PG under ₹5000'].map((sug, i) => (
+              {(recentSearches.length > 0 ? recentSearches.slice(0, 3) : ['Boys PG in Gurgaon', 'Girls PG with AC', 'Budget PG under ₹5000']).map((sug, i) => (
                 <button key={i} className="suggestion-chip" onClick={() => handlePopularSearch(sug)}>
-                  🔍 {sug}
+                  {recentSearches.length > 0 ? '🕒' : '🔍'} {sug.length > 30 ? sug.substring(0, 30) + '...' : sug}
                 </button>
               ))}
             </div>
@@ -532,20 +576,32 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Popular Searches */}
+          {/* Popular/Recent Searches */}
           <section className="popular-searches fade-in-section">
-            <h2 className="section-title">Popular Searches</h2>
-            <p className="section-subtitle">Quick searches that people love</p>
+            <h2 className="section-title">{recentSearches.length > 0 ? "Recent Searches" : "Popular Searches"}</h2>
+            <p className="section-subtitle">{recentSearches.length > 0 ? "Jump back into your recent searches" : "Quick searches that people love"}</p>
             <div className="popular-grid">
-              {displaySearches.map((item, i) => (
-                <div key={i} className="popular-card" onClick={() => handlePopularSearch(item.query)}>
-                  <span className="popular-icon">{item.emoji}</span>
-                  <div>
-                    <h4>{item.title}</h4>
-                    <p>{item.subtitle}</p>
+              {recentSearches.length > 0 ? (
+                recentSearches.map((query, i) => (
+                  <div key={i} className="popular-card" onClick={() => handlePopularSearch(query)}>
+                    <span className="popular-icon">🕒</span>
+                    <div>
+                      <h4>{query.length > 30 ? query.substring(0, 30) + '...' : query}</h4>
+                      <p>Resume search</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                displaySearches.map((item, i) => (
+                  <div key={i} className="popular-card" onClick={() => handlePopularSearch(item.query)}>
+                    <span className="popular-icon">{item.emoji}</span>
+                    <div>
+                      <h4>{item.title}</h4>
+                      <p>{item.subtitle}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </section>
 

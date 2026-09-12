@@ -40,6 +40,32 @@ export async function POST(req: Request) {
         property_id,
         owner_id: property.owner_id
       });
+
+      // Try sending an email notification using Resend
+      if (process.env.RESEND_API_KEY) {
+        const { Resend } = require('resend');
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        
+        try {
+          const userEmail = (session.user as any).email || 'test@example.com'; 
+          
+          await resend.emails.send({
+            from: 'onboarding@resend.dev', // Resend default testing email
+            to: process.env.ADMIN_EMAIL || userEmail,
+            subject: `Visit Scheduled for ${property.name}`,
+            html: `
+              <h2>Visit Scheduled!</h2>
+              <p>Great news! A visit has been scheduled for <strong>${property.name}</strong>.</p>
+              <p>The owner has been notified and will contact you shortly.</p>
+              <br/>
+              <p>Thanks for using NestMatch!</p>
+            `
+          });
+        } catch (emailError) {
+          console.error("Failed to send email with Resend:", emailError);
+        }
+      }
+
       return NextResponse.json({ success: true, message: 'Interest registered successfully' });
     } catch (e: any) {
       if (e.code === 11000) {
