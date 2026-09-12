@@ -135,30 +135,7 @@ export default function PGDetailsModal({
                 </a>
               </>
             )}
-            <button 
-              onClick={async () => {
-                const shareUrl = `${window.location.origin}/pg/${pg._id || pg.id}`;
-                const shareData = {
-                  title: pg.name,
-                  text: `Check out this property on NestMatch: ${pg.name}`,
-                  url: shareUrl
-                };
-                if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-                  try {
-                    await navigator.share(shareData);
-                  } catch (err) {
-                    navigator.clipboard.writeText(shareUrl);
-                    toast.success('Link copied to clipboard!');
-                  }
-                } else {
-                  navigator.clipboard.writeText(shareUrl);
-                  toast.success('Link copied to clipboard!');
-                }
-              }}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', color: '#3b82f6', padding: '10px 18px', borderRadius: '10px', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer' }}
-            >
-              🔗 Share
-            </button>
+
             {pg.websiteUri && (
               <a href={pg.websiteUri} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.3)', color: '#a855f7', padding: '10px 18px', borderRadius: '10px', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold' }}>
                 🌐 Visit Website

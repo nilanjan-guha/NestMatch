@@ -556,7 +556,7 @@ export default function Home() {
             <p className="section-subtitle">{recentSearches.length > 0 ? "Jump back into your recent searches" : "Quick searches that people love"}</p>
             <div className="popular-grid">
               {recentSearches.length > 0 ? (
-                recentSearches.map((query, i) => (
+                recentSearches.slice(0, 5).map((query, i) => (
                   <div key={i} className="popular-card" onClick={() => handlePopularSearch(query)}>
                     <span className="popular-icon">🕒</span>
                     <div>

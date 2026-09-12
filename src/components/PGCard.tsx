@@ -136,19 +136,6 @@ export default function PGCard({
           </div>
 
           <button 
-            onClick={async (e) => {
-              e.stopPropagation();
-              const shareUrl = `${window.location.origin}/pg/${pg._id || pg.id}`;
-              const text = `Check out this amazing PG on NestMatch: ${pg.name}!\n\n${shareUrl}`;
-              window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-            }}
-            style={{ position: 'absolute', top: '15px', right: '65px', background: 'rgba(37,211,102,0.8)', border: '1px solid rgba(255,255,255,0.2)', padding: '8px', borderRadius: '50%', color: 'white', cursor: 'pointer', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', fontSize: '18px', boxShadow: '0 4px 12px rgba(37,211,102,0.3)' }}
-            title="Share to WhatsApp"
-          >
-            💬
-          </button>
-
-          <button 
             onClick={handleSave}
             disabled={saving}
             style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)', padding: '8px', borderRadius: '50%', color: 'white', cursor: 'pointer', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', fontSize: '20px' }}

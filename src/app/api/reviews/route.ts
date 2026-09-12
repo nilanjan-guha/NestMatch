@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     // Since Google Places have string IDs (e.g., 'ChIJ...'), we need to either store the Google PG in our DB first,
     // or change the Review schema to accept string property IDs. Let's change the Review schema to accept String to support Google Maps PGs!
     // But for now, we will query by property_id.
-    const reviews = await Review.find({ property_id }).populate('user_id', 'firstName lastName avatar').sort({ createdAt: -1 });
+    const reviews = await Review.find({ property_id }).populate('user_id', 'name avatar').sort({ createdAt: -1 });
 
     return NextResponse.json({ success: true, reviews });
   } catch (error: any) {
