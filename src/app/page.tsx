@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import AiSearchBar from '@/components/AiSearchBar';
 import PGCard from '@/components/PGCard';
 import FooterModals from '@/components/FooterModals';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useClerk } from '@clerk/nextjs';
 import InteractiveMap from '@/components/InteractiveMap';
 
 type ModalType = 'about' | 'howItWorks' | 'listProperty' | 'contact' | 'privacy' | 'terms' | null;
@@ -11,7 +11,8 @@ type ModalType = 'about' | 'howItWorks' | 'listProperty' | 'contact' | 'privacy'
 import { POPULAR_SEARCHES } from '@/constants/searchSuggestions';
 
 export default function Home() {
-  const { user } = useUser();
+  const { user, isSignedIn, isLoaded } = useUser();
+  const clerk = useClerk();
   const [pgs, setPgs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -177,6 +178,12 @@ export default function Home() {
   }, [loading]);
 
   const handleSearch = async (query: string, coordinates?: [number, number]) => {
+    // Prevent unauthenticated users from using the AI search
+    if (isLoaded && !isSignedIn) {
+      clerk.openSignIn();
+      return;
+    }
+
     setLoading(true);
     setCurrentQuery(query);
     setHasSearched(true);
@@ -228,6 +235,10 @@ export default function Home() {
   };
 
   const handlePopularSearch = (query: string) => {
+    if (isLoaded && !isSignedIn) {
+      clerk.openSignIn();
+      return;
+    }
     setExternalQuery({ query, ts: Date.now() });
   };
 

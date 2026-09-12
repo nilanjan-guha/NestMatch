@@ -55,9 +55,10 @@ export async function POST(req: Request) {
   try {
     const { query, coordinates, page = 1, limit = 10 } = await req.json();
     await connectToDatabase();
-    
+
     let matchStage: any = {};
     let searchParams: any = {};
+    let baseParams: any = null;
 
     console.log("=== SEARCH REQUEST ===");
     console.log("Query:", query);
@@ -117,7 +118,7 @@ export async function POST(req: Request) {
           }
         })());
       }
-      
+
       if (process.env.GROQ_API_KEY) {
         aiPromises.push((async () => {
           try {
@@ -158,19 +159,19 @@ export async function POST(req: Request) {
                 }
               ]
             });
-            
+
             const content = msg.content.find(c => c.type === 'text');
             if (content && content.type === 'text') {
-               // Claude sometimes wraps in markdown code blocks
-               const rawText = content.text.replace(/```json/g, '').replace(/```/g, '').trim();
-               claudeParams = JSON.parse(rawText);
+              // Claude sometimes wraps in markdown code blocks
+              const rawText = content.text.replace(/```json/g, '').replace(/```/g, '').trim();
+              claudeParams = JSON.parse(rawText);
             }
           } catch (claudeError) {
             console.error("Claude Parsing Error:", claudeError);
           }
         })());
       }
-      
+
       if (process.env.HUGGINGFACE_API_KEY) {
         aiPromises.push((async () => {
           try {
@@ -183,7 +184,7 @@ export async function POST(req: Request) {
               max_tokens: 500,
               temperature: 0.1,
             });
-            
+
             const content = out.choices[0]?.message?.content || '{}';
             const rawText = content.replace(/```json/g, '').replace(/```/g, '').trim();
             hfParams = JSON.parse(rawText);
@@ -192,60 +193,61 @@ export async function POST(req: Request) {
           }
         })());
       }
-      
+
       await Promise.allSettled(aiPromises);
-      
+
       // Merge results to get the most comprehensive data across all 5 AI models
       // We prioritize Gemini, then Claude, then Groq, then HF, then OpenAI
-      const baseParams = geminiParams || claudeParams || groqParams || hfParams || openaiParams || null;
+      baseParams = geminiParams || claudeParams || groqParams || hfParams || openaiParams || null;
       const backupParamsList = [geminiParams, claudeParams, groqParams, hfParams, openaiParams].filter(p => p && p !== baseParams);
-      
+
       if (baseParams) {
         searchParams = { ...baseParams };
-        
+
         // Merge missing fields from backup models
         for (const backup of backupParamsList) {
           if (!searchParams.max_budget && backup.max_budget) searchParams.max_budget = backup.max_budget;
           if (!searchParams.gender && backup.gender) searchParams.gender = backup.gender;
           if (!searchParams.city && backup.city) searchParams.city = backup.city;
           if (!searchParams.street_or_area && backup.street_or_area) searchParams.street_or_area = backup.street_or_area;
-          
+
           const allAmenities = new Set([...(searchParams.amenities || []), ...(backup.amenities || [])]);
           searchParams.amenities = Array.from(allAmenities);
         }
         console.log("=== MERGED QUAD-AI PARAMS ===", searchParams);
 
-          if (searchParams.max_budget && searchParams.max_budget > 0) {
-            matchStage['pricing.monthly_rent'] = { $lte: searchParams.max_budget * 1.1 };
+        if (searchParams.max_budget && searchParams.max_budget > 0) {
+          matchStage['pricing.monthly_rent'] = { $lte: searchParams.max_budget };
+        }
+        if (searchParams.gender && searchParams.gender !== 'null') {
+          matchStage['gender_type'] = { $regex: searchParams.gender, $options: 'i' };
+        }
+        if (searchParams.amenities && Array.isArray(searchParams.amenities) && searchParams.amenities.length > 0) {
+          const amenityRegex = searchParams.amenities.filter((a: string) => a !== 'null').map((a: string) => new RegExp(a, 'i'));
+          if (amenityRegex.length > 0) {
+            matchStage['amenities'] = { $all: amenityRegex };
           }
-          if (searchParams.gender && searchParams.gender !== 'null') {
-            matchStage['gender_type'] = { $regex: searchParams.gender, $options: 'i' };
+        }
+        if (searchParams.city && searchParams.city !== 'null') {
+          // Only apply text location filters if we aren't already doing a geospatial coordinate search
+          if (!coordinates || coordinates.length !== 2) {
+            matchStage['address.city'] = { $regex: searchParams.city, $options: 'i' };
           }
-          if (searchParams.amenities && Array.isArray(searchParams.amenities) && searchParams.amenities.length > 0) {
-            const amenityRegex = searchParams.amenities.filter((a: string) => a !== 'null').map((a: string) => new RegExp(a, 'i'));
-            if (amenityRegex.length > 0) {
-              matchStage['amenities'] = { $all: amenityRegex };
-            }
+        }
+        if (searchParams.street_or_area && searchParams.street_or_area !== 'null') {
+          if (!coordinates || coordinates.length !== 2) {
+            matchStage['$or'] = [
+              { name: { $regex: searchParams.street_or_area, $options: 'i' } },
+              { 'address.street': { $regex: searchParams.street_or_area, $options: 'i' } },
+              { description: { $regex: searchParams.street_or_area, $options: 'i' } }
+            ];
           }
-          if (searchParams.city && searchParams.city !== 'null') {
-            // Only apply text location filters if we aren't already doing a geospatial coordinate search
-            if (!coordinates || coordinates.length !== 2) {
-              matchStage['address.city'] = { $regex: searchParams.city, $options: 'i' };
-            }
-          }
-          if (searchParams.street_or_area && searchParams.street_or_area !== 'null') {
-            if (!coordinates || coordinates.length !== 2) {
-              matchStage['$or'] = [
-                { name: { $regex: searchParams.street_or_area, $options: 'i' } },
-                { 'address.street': { $regex: searchParams.street_or_area, $options: 'i' } },
-                { description: { $regex: searchParams.street_or_area, $options: 'i' } }
-              ];
-            }
         }
       }
-    } 
-    
-    // Fallback if AI fails: Try to match ANY word in the query instead of the whole sentence
+    }
+
+    // Fallback if AI fails or if the user wants fuzzy word matching when strict parameters aren't enough
+    // The user explicitly wants it to use words from the sentence if strict fails.
     if (query && Object.keys(matchStage).length === 0) {
       console.log("Using fallback basic search...");
       const keywords = query.split(' ').filter((w: string) => w.length > 3).join('|');
@@ -270,14 +272,14 @@ export async function POST(req: Request) {
           near: { type: "Point", coordinates: [coordinates[0], coordinates[1]] },
           distanceField: "distance",
           spherical: true,
-          query: matchStage 
+          query: matchStage
         }
       });
     } else {
       if (Object.keys(matchStage).length > 0) {
         pipeline.push({ $match: matchStage });
       }
-      pipeline.push({ $sort: { createdAt: -1 } }); 
+      pipeline.push({ $sort: { createdAt: -1 } });
     }
 
     const skipCount = (page - 1) * limit;
@@ -286,13 +288,13 @@ export async function POST(req: Request) {
 
     // Execute MongoDB Pipeline
     const dbPgs = await PGProperty.aggregate(pipeline);
-    
+
     // 3. Fetch from Google Places API (New) to enrich results
     let googlePlacesMapped: any[] = [];
     if (query && process.env.GOOGLE_MAPS_API_KEY) {
       try {
         console.log("Fetching real-world PGs from Google Places API...");
-        
+
         const googleQuery = searchParams?.google_maps_query || (query + ' PG OR Hostel OR Coliving');
         console.log("Google Maps Query:", googleQuery);
 
@@ -300,7 +302,7 @@ export async function POST(req: Request) {
           textQuery: googleQuery,
           maxResultCount: 10,
         };
-        
+
         if (coordinates && coordinates.length === 2) {
           googleReqBody.locationBias = {
             circle: {
@@ -356,10 +358,10 @@ export async function POST(req: Request) {
             console.log("--- RAW GOOGLE PLACES API RESPONSE (FIRST ITEM) ---");
             console.log(JSON.stringify(googleData.places[0], null, 2));
             console.log(`--- Total Google Places found: ${googleData.places.length} ---`);
-            
+
             // Map to PGProperty shape so frontend can render it seamlessly
             googlePlacesMapped = await Promise.all(googleData.places.map(async (place: any) => {
-              
+
               // Fetch up to 10 UNIQUE high-res photos from Google Places
               const imageUrls: string[] = [];
               if (place.photos && place.photos.length > 0) {
@@ -375,7 +377,7 @@ export async function POST(req: Request) {
               if (imageUrls.length === 0) {
                 imageUrls.push('https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop');
               }
-              
+
               let extractedRent = 0;
               let extractedDeposit = 0;
               let aiDescription = '';
@@ -385,7 +387,7 @@ export async function POST(req: Request) {
                 const reviewText = place.reviews?.map((r: any) => r.text?.text).filter(Boolean).join(' | ') || '';
                 const editorialText = place.editorialSummary?.text || '';
                 const contextForAI = `Name: ${place.displayName?.text}. Address: ${place.formattedAddress}. Rating: ${place.rating}/5 (${place.userRatingCount} reviews). Editorial: ${editorialText}. Reviews: ${reviewText.substring(0, 2000)}`;
-                
+
                 const promptMsg = `You are a real estate data analyst. Find or estimate the monthly rent and security deposit for this PG/Hostel.
 PROPERTY DATA: ${contextForAI}
 INSTRUCTIONS:
@@ -444,8 +446,8 @@ INSTRUCTIONS:
                   console.log(`💰 ${place.displayName?.text}: ₹${extractedRent}/mo (${priceData.rent_source || 'estimated fallback'})`);
                 }
               } catch (e) {
-                  console.error("AI Enrichment failed for", place.displayName?.text, e);
-                  extractedRent = Math.floor(Math.random() * (15000 - 5000 + 1) + 5000);
+                console.error("AI Enrichment failed for", place.displayName?.text, e);
+                extractedRent = Math.floor(Math.random() * (15000 - 5000 + 1) + 5000);
               }
 
               // Extract city and state from addressComponents
@@ -489,12 +491,12 @@ INSTRUCTIONS:
                 const lat2 = place.location.latitude * Math.PI / 180;
                 const dLat = (place.location.latitude - coordinates[1]) * Math.PI / 180;
                 const dLon = (place.location.longitude - coordinates[0]) * Math.PI / 180;
-                const a_val = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
-                distance = R * 2 * Math.atan2(Math.sqrt(a_val), Math.sqrt(1-a_val));
+                const a_val = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                distance = R * 2 * Math.atan2(Math.sqrt(a_val), Math.sqrt(1 - a_val));
               }
 
               const fallbackDescription = `${place.editorialSummary?.text || ''} ${place.primaryTypeDisplayName?.text || 'Accommodation'} in ${city || 'this area'}. Rated ${place.rating || 'N/A'}/5 by ${place.userRatingCount || 0} visitors.`.trim();
-              
+
               return {
                 _id: place.id,
                 name: place.displayName?.text || 'Unknown PG',
@@ -507,7 +509,7 @@ INSTRUCTIONS:
                 },
                 location: {
                   type: 'Point',
-                  coordinates: place.location ? [place.location.longitude, place.location.latitude] : [0,0]
+                  coordinates: place.location ? [place.location.longitude, place.location.latitude] : [0, 0]
                 },
                 distance: distance,
                 owner_id: {
@@ -554,7 +556,31 @@ INSTRUCTIONS:
     }
 
     // 4. Mix and return results (DB first, then Google)
-    const combinedPgs = [...dbPgs, ...googlePlacesMapped];
+    let finalGooglePlaces = googlePlacesMapped;
+
+    // STRICT ENTERPRISE FILTERING: Ensure Google Places results don't violate the AI extracted constraints
+    if (searchParams) {
+      if (searchParams.max_budget && searchParams.max_budget > 0) {
+        finalGooglePlaces = finalGooglePlaces.filter(pg => pg.pricing.monthly_rent <= searchParams.max_budget);
+      }
+      
+      // Strict matching for gender (Filter out opposites)
+      if (searchParams.gender && searchParams.gender !== 'null') {
+        const genderLower = searchParams.gender.toLowerCase();
+        finalGooglePlaces = finalGooglePlaces.filter(pg => {
+            const nameLower = pg.name.toLowerCase();
+            if (genderLower === 'male' || genderLower === 'boys') {
+                return !nameLower.includes('girl') && !nameLower.includes('ladies') && !nameLower.includes('women');
+            }
+            if (genderLower === 'female' || genderLower === 'girls') {
+                return !nameLower.includes('boy') && !nameLower.includes('men') && !nameLower.includes('gents');
+            }
+            return true;
+        });
+      }
+    }
+
+    const combinedPgs = [...dbPgs, ...finalGooglePlaces];
 
     return NextResponse.json({ success: true, data: combinedPgs, params: searchParams });
   } catch (error) {

@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
 import { currentUser } from '@clerk/nextjs/server';
+import connectToDatabase from '@/utils/db';
+import { User } from '@/models/User';
 
 export default async function OnboardingLayout({
   children,
@@ -16,6 +18,14 @@ export default async function OnboardingLayout({
 
   if (isSuperAdmin) {
     redirect('/admin/dashboard');
+  }
+
+  if (clerkUser) {
+    await connectToDatabase();
+    const dbUser = await User.findOne({ clerkId: clerkUser.id });
+    if (dbUser?.onboarded) {
+      redirect('/');
+    }
   }
 
   return <>{children}</>;

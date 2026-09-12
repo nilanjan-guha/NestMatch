@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition, useState, useEffect } from 'react';
+import { useTransition, useState, useEffect, useRef } from 'react';
 import { completeOnboarding } from '@/app/actions/user';
 import toast from 'react-hot-toast';
 import { useUser } from '@clerk/nextjs';
@@ -8,10 +8,12 @@ import { useRouter } from 'next/navigation';
 
 export default function OnboardingPage() {
   const [isPending, startTransition] = useTransition();
-  const { user } = useUser();
+  const [isAutoRetrying, setIsAutoRetrying] = useState(false);
+  const { user, isLoaded } = useUser();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const router = useRouter();
+  const roleSectionRef = useRef<HTMLDivElement>(null);
 
   const [countryCode, setCountryCode] = useState('+91');
 
@@ -31,6 +33,34 @@ export default function OnboardingPage() {
     }
   }, [user]);
 
+  // Auto-retry if there was a previous pending onboarding stuck due to network issue
+  useEffect(() => {
+    if (!isLoaded) return;
+    const pending = localStorage.getItem('pendingOnboarding');
+    if (pending) {
+      try {
+        const { role, name, fullPhone } = JSON.parse(pending);
+        setIsAutoRetrying(true);
+        toast.loading("Resuming your previous selection...", { id: 'retry-toast' });
+        
+        startTransition(async () => {
+          try {
+            await completeOnboarding(role, name, fullPhone);
+            localStorage.removeItem('pendingOnboarding');
+            toast.success(`Welcome to NestMatch! You are now a ${role === 'owner' ? 'PG Owner' : 'PG Searcher'}.`, { id: 'retry-toast' });
+            window.location.href = '/';
+          } catch (error) {
+            console.error("Failed to auto-resume onboarding:", error);
+            toast.error("Failed to resume. Please try selecting again.", { id: 'retry-toast' });
+            setIsAutoRetrying(false);
+          }
+        });
+      } catch(e) {
+        localStorage.removeItem('pendingOnboarding');
+      }
+    }
+  }, [isLoaded]);
+
   const handleSelection = (role: 'searcher' | 'owner') => {
     if (!name.trim() || !phone.trim()) {
       toast.error("Please provide your name and phone number to continue.");
@@ -45,7 +75,14 @@ export default function OnboardingPage() {
     startTransition(async () => {
       try {
         const fullPhone = `${countryCode}${phone}`;
+        // Save to localStorage just in case network hangs
+        localStorage.setItem('pendingOnboarding', JSON.stringify({ role, name, fullPhone }));
+        
         await completeOnboarding(role, name, fullPhone);
+        
+        // Remove from storage on success
+        localStorage.removeItem('pendingOnboarding');
+        
         toast.success(`Welcome to NestMatch! You are now a ${role === 'owner' ? 'PG Owner' : 'PG Searcher'}.`);
         window.location.href = '/';
       } catch (error) {
@@ -70,7 +107,7 @@ export default function OnboardingPage() {
           Welcome to <span style={{ color: 'var(--primary)' }}>NestMatch</span>
         </h1>
         <p style={{ fontSize: '18px', color: 'var(--text-muted)' }}>
-          Please confirm your details and tell us how you plan to use NestMatch.
+          {isAutoRetrying ? "Resuming your previous selection, please wait..." : "Please confirm your details and tell us how you plan to use NestMatch."}
         </p>
       </div>
 
@@ -130,7 +167,15 @@ export default function OnboardingPage() {
               value={phone}
               onChange={(e) => {
                 const val = e.target.value.replace(/\D/g, '');
-                if (val.length <= 10) setPhone(val);
+                if (val.length <= 10) {
+                  setPhone(val);
+                  // Auto-scroll to role selection if they finished typing their phone
+                  if (val.length === 10 && name.trim()) {
+                    setTimeout(() => {
+                      roleSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 200);
+                  }
+                }
               }}
               placeholder="9876543210"
               style={{
@@ -147,12 +192,23 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap', justifyContent: 'center' }}>
+      {/* Role Selection Section */}
+      <div ref={roleSectionRef} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        
+        {name.trim() && phone.length === 10 && (
+          <div style={{ marginBottom: '25px', textAlign: 'center', padding: '10px 20px', background: 'rgba(162, 53, 255, 0.1)', borderRadius: '30px', border: '1px solid var(--primary)' }}>
+            <p style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '16px', margin: 0 }}>
+              👇 Almost done! Please select your role to continue
+            </p>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap', justifyContent: 'center' }}>
         
         {/* Searcher Card */}
         <button 
           onClick={() => handleSelection('searcher')}
-          disabled={isPending}
+          disabled={isPending || isAutoRetrying}
           style={{
             background: 'var(--surface)',
             border: '1px solid var(--surface-border)',
@@ -160,13 +216,14 @@ export default function OnboardingPage() {
             padding: '40px 30px',
             width: '280px',
             textAlign: 'center',
-            cursor: isPending ? 'not-allowed' : 'pointer',
-            opacity: isPending ? 0.7 : 1,
+            cursor: (isPending || isAutoRetrying) ? 'not-allowed' : 'pointer',
+            opacity: (isPending || isAutoRetrying) ? 0.7 : 1,
             transition: 'all 0.3s ease',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '20px'
+            gap: '20px',
+            color: 'var(--foreground)'
           }}
           onMouseOver={(e) => {
             e.currentTarget.style.transform = 'translateY(-5px)';
@@ -191,7 +248,7 @@ export default function OnboardingPage() {
         {/* Owner Card */}
         <button 
           onClick={() => handleSelection('owner')}
-          disabled={isPending}
+          disabled={isPending || isAutoRetrying}
           style={{
             background: 'var(--surface)',
             border: '1px solid var(--surface-border)',
@@ -199,13 +256,14 @@ export default function OnboardingPage() {
             padding: '40px 30px',
             width: '280px',
             textAlign: 'center',
-            cursor: isPending ? 'not-allowed' : 'pointer',
-            opacity: isPending ? 0.7 : 1,
+            cursor: (isPending || isAutoRetrying) ? 'not-allowed' : 'pointer',
+            opacity: (isPending || isAutoRetrying) ? 0.7 : 1,
             transition: 'all 0.3s ease',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '20px'
+            gap: '20px',
+            color: 'var(--foreground)'
           }}
           onMouseOver={(e) => {
             e.currentTarget.style.transform = 'translateY(-5px)';
@@ -227,6 +285,7 @@ export default function OnboardingPage() {
           </div>
         </button>
 
+        </div>
       </div>
     </div>
   );

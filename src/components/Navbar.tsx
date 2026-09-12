@@ -7,6 +7,8 @@ import connectToDatabase from '@/utils/db';
 import { PGProperty } from '@/models/PGProperty';
 import { SavedProperty } from '@/models/SavedProperty';
 import OnboardingRedirect from './OnboardingRedirect';
+import MobileAuthButtons from './MobileAuthButtons';
+import MenuCloseOnNavigate from './MenuCloseOnNavigate';
 
 export default async function Navbar() {
   const { userId } = await auth();
@@ -78,6 +80,7 @@ export default async function Navbar() {
         <Link href="/" style={{ fontSize: '24px', fontWeight: 'bold', textDecoration: 'none', color: 'var(--foreground)', display: 'flex', alignItems: 'center', gap: '10px' }}>
           NestMatch
         </Link>
+        <MenuCloseOnNavigate />
 
         {/* Checkbox Hack for Mobile Menu */}
         <input type="checkbox" id="mobile-menu-toggle" style={{ display: 'none' }} />
@@ -130,20 +133,7 @@ export default async function Navbar() {
               </div>
             </>
           ) : (
-            <div className="stack-mobile" style={{ display: 'flex', alignItems: 'center', gap: '15px', width: '100%' }}>
-              <ThemeToggle />
-              <div className="hide-mobile" style={{ width: '1px', height: '24px', background: 'var(--surface-border)' }}></div>
-              <SignInButton mode="modal">
-                <button style={{ height: '40px', padding: '0 20px', color: 'var(--foreground)', background: 'var(--surface)', border: '1px solid var(--surface-border)', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', width: '100%' }}>
-                  Login
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal" fallbackRedirectUrl="/onboarding">
-                <button style={{ height: '40px', padding: '0 20px', background: 'var(--primary)', color: 'white', border: 'none', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', width: '100%' }}>
-                  Register
-                </button>
-              </SignUpButton>
-            </div>
+            <MobileAuthButtons />
           )}
         </div>
       </div>
