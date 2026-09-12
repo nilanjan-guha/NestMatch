@@ -10,6 +10,7 @@ export async function GET() {
     const { userId } = await auth();
     let session = null;
     if (userId) {
+      await connectToDatabase();
       session = { user: await User.findOne({ clerkId: userId }) };
     }
     if (!session || !session.user) {
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
     const { userId } = await auth();
     let session = null;
     if (userId) {
+      await connectToDatabase();
       session = { user: await User.findOne({ clerkId: userId }) };
     }
     if (!session || !session.user) {
