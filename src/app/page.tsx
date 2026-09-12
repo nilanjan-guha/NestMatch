@@ -612,7 +612,7 @@ export default function Home() {
           </footer>
 
           {/* Footer Modals */}
-          <FooterModals activeModal={activeModal} setActiveModal={setActiveModal} />
+          <FooterModals activeModal={activeModal} onClose={() => setActiveModal(null)} />
 
           {/* Floating Compare Bar */}
           {compareList.length > 0 && (
