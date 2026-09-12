@@ -109,8 +109,32 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NestMatch",
-  description: "Find the perfect PG tailored to your needs.",
+  title: "NestMatch | AI Powered PG & Hostel Finder",
+  description: "Find the perfect PG, Hostel, or Coliving space instantly using NestMatch's Quad-AI search engine. Affordable rooms for rent, boys PG, girls PG, and couples friendly housing in your city.",
+  keywords: [
+    // Core terms
+    "PG", "Hostel", "Coliving", "NestMatch", "Rent", "Roommate", "Boys PG", "Girls PG", "Flats", "AI PG Finder", "India PG", 
+    "Paying Guest", "Student Housing", "Corporate Housing", "Shared Accommodation", "Rooms for Rent",
+    // Top Cities
+    "PG in Bangalore", "PG in Gurgaon", "PG in Mumbai", "PG in Pune", "PG in Delhi", "PG in Noida", "PG in Hyderabad", "PG in Chennai",
+    // Specifics
+    "Cheap PG", "Luxury PG", "Single Room PG", "Double Sharing PG", "PG with Food", "PG with WiFi", "PG with AC",
+    "Couples Friendly PG", "No Brokerage PG", "Direct Owner PG", "Zero Brokerage flats", "Furnished Flat",
+    // AI/Tech angles
+    "AI Real Estate", "Smart PG Search", "Automated PG Booking", "NestMatch AI", "Nest Match"
+  ],
+  openGraph: {
+    title: "NestMatch | AI Powered PG Finder",
+    description: "Tired of brokers? Use our AI to find the perfect PG matching your exact budget and requirements instantly.",
+    type: "website",
+    locale: "en_IN",
+    siteName: "NestMatch",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "NestMatch | AI Powered PG Finder",
+    description: "Tired of brokers? Use our AI to find the perfect PG matching your exact budget and requirements instantly.",
+  }
 };
 
 export const viewport: Viewport = {
