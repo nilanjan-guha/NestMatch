@@ -56,7 +56,17 @@ export default function WatchlistTable({ properties }: { properties: any[] }) {
                   {pg.name}
                 </td>
                 <td style={{ padding: '12px' }}>{pg.address?.city}, {pg.address?.state}</td>
-                <td style={{ padding: '12px' }}>{pg.gender_type && pg.gender_type !== 'gender_type_placeholder' ? pg.gender_type : 'Unspecified'}</td>
+                <td style={{ padding: '12px' }}>
+                  {(() => {
+                    const g = pg.gender_type;
+                    if (!g || g.includes('placeholder') || g.toLowerCase() === 'unspecified') return '-';
+                    const lower = g.toLowerCase();
+                    if (lower.includes('female') || lower.includes('girl') || lower.includes('women')) return 'Female';
+                    if (lower.includes('unisex') || lower.includes('coliv') || lower.includes('co-liv') || lower.includes('couple') || lower.includes('any')) return 'Unisex';
+                    if (lower.includes('male') || lower.includes('boy') || lower.includes('men')) return 'Male';
+                    return '-';
+                  })()}
+                </td>
                 <td style={{ padding: '12px', color: 'var(--secondary)' }}>₹{pg.pricing?.monthly_rent}</td>
                 <td style={{ padding: '12px', display: 'flex', gap: '10px' }}>
                   <button 

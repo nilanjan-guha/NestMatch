@@ -50,7 +50,21 @@ export default function PGDetailsClient({ pg }: { pg: any }) {
         </div>
 
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-          <span style={{ background: 'var(--surface)', padding: '8px 16px', borderRadius: '20px', fontSize: '14px' }}>{pg.gender_type && pg.gender_type !== 'gender_type_placeholder' ? pg.gender_type : 'Unspecified'}</span>
+          {(() => {
+            const g = pg.gender_type;
+            if (!g || g.includes('placeholder') || g.toLowerCase() === 'unspecified') return null;
+            const lower = g.toLowerCase();
+            let displayGender = null;
+            if (lower.includes('female') || lower.includes('girl') || lower.includes('women')) displayGender = 'Female';
+            else if (lower.includes('unisex') || lower.includes('coliv') || lower.includes('co-liv') || lower.includes('couple') || lower.includes('any')) displayGender = 'Unisex';
+            else if (lower.includes('male') || lower.includes('boy') || lower.includes('men')) displayGender = 'Male';
+            if (!displayGender) return null;
+            return (
+              <span style={{ background: 'var(--surface)', padding: '8px 16px', borderRadius: '20px', fontSize: '14px' }}>
+                {displayGender}
+              </span>
+            );
+          })()}
           <span style={{ background: 'var(--primary)', color: 'white', padding: '8px 16px', borderRadius: '20px', fontSize: '14px' }}>★ {pg.rating || 0} ({pg.userRatingCount || 0} reviews)</span>
         </div>
 

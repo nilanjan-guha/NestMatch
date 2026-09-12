@@ -714,10 +714,23 @@ export default function Home() {
                         <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>{pg.name}</h3>
                         <p style={{ color: 'var(--secondary)', fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>₹{pg.pricing?.monthly_rent || 'N/A'}<span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 'normal' }}>/mo</span></p>
                         
-                        <div style={{ marginBottom: '15px' }}>
-                          <strong style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: 'var(--text-muted)' }}>Gender</strong>
-                          <span style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '4px 10px', borderRadius: '12px', fontSize: '14px' }}>{pg.gender_type}</span>
-                        </div>
+                        {(() => {
+                          const g = pg.gender_type;
+                          if (!g || g.includes('placeholder') || g.toLowerCase() === 'unspecified') return null;
+                          const lower = g.toLowerCase();
+                          let displayGender = null;
+                          if (lower.includes('female') || lower.includes('girl') || lower.includes('women')) displayGender = 'Female';
+                          else if (lower.includes('unisex') || lower.includes('coliv') || lower.includes('co-liv') || lower.includes('couple') || lower.includes('any')) displayGender = 'Unisex';
+                          else if (lower.includes('male') || lower.includes('boy') || lower.includes('men')) displayGender = 'Male';
+                          
+                          if (!displayGender) return null;
+                          return (
+                            <div style={{ marginBottom: '15px' }}>
+                              <strong style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: 'var(--text-muted)' }}>Gender</strong>
+                              <span style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '4px 10px', borderRadius: '12px', fontSize: '14px' }}>{displayGender}</span>
+                            </div>
+                          );
+                        })()}
 
                         <div>
                           <strong style={{ display: 'block', marginBottom: '10px', fontSize: '12px', color: 'var(--text-muted)' }}>Amenities</strong>
