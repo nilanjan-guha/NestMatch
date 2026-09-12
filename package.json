@@ -19,6 +19,7 @@
     "@huggingface/inference": "^4.13.28",
     "@vis.gl/react-google-maps": "^1.10.0",
     "bcryptjs": "^3.0.3",
+    "canvas-confetti": "^1.9.4",
     "mongoose": "^9.9.5",
     "next": "16.3.4",
     "openai": "^7.13.0",
@@ -30,6 +31,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

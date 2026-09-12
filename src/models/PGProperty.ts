@@ -19,6 +19,7 @@ export interface IPGProperty extends Document {
   amenities: string[];
   rules: string[];
   media: string[];
+  video_url?: string; // Optional URL for YouTube or virtual tour
   capacity: {
     total_beds: number;
     available_beds: number;
@@ -57,6 +58,7 @@ const PGPropertySchema: Schema = new Schema({
   amenities: [{ type: String }],
   rules: [{ type: String }],
   media: [{ type: String }],
+  video_url: { type: String, default: '' },
   capacity: {
     total_beds: { type: Number, default: 0 },
     available_beds: { type: Number, default: 0 },

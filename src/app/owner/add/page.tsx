@@ -15,7 +15,8 @@ export default function AddProperty() {
     capacity: { total_beds: '', available_beds: '', room_details: '' },
     amenities: '',
     rules: '',
-    media: ''
+    media: '',
+    video_url: ''
   });
   const [files, setFiles] = useState<File[]>([]);
 
@@ -170,7 +171,9 @@ export default function AddProperty() {
                   style={inputStyle} 
                 />
                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Or add image URLs manually below:</span>
-                <input type="text" name="media" placeholder="Image/Video URLs (comma separated)" value={formData.media} onChange={handleChange} style={inputStyle} />
+                <input type="text" name="media" placeholder="Image URLs (comma separated)" value={formData.media} onChange={handleChange} style={inputStyle} />
+                <label style={{ color: 'var(--text-muted)', marginTop: '10px' }}>Virtual Tour / YouTube Video URL (Optional)</label>
+                <input type="url" name="video_url" placeholder="https://youtube.com/watch?v=..." value={formData.video_url} onChange={handleChange} style={inputStyle} />
               </div>
             </div>
           </div>

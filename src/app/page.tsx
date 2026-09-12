@@ -30,7 +30,51 @@ export default function Home() {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [hoveredPgId, setHoveredPgId] = useState<string | null>(null);
   const [externalQuery, setExternalQuery] = useState<{ query: string, ts: number } | null>(null);
+  
+  // Smart Alerts State
+  const [alertPhone, setAlertPhone] = useState('');
+  const [alertStatus, setAlertStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [alertMessage, setAlertMessage] = useState('');
+  
+  // Compare State
+  const [compareList, setCompareList] = useState<any[]>([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  const handleAlertSubmit = async () => {
+    if (!alertPhone || alertPhone.length < 10) {
+      setAlertStatus('error');
+      setAlertMessage('Please enter a valid phone number');
+      return;
+    }
+    
+    setAlertStatus('loading');
+    try {
+      const res = await fetch('/api/alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber: alertPhone,
+          query: currentQuery,
+          coordinates: userCoords
+        })
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setAlertStatus('success');
+        setAlertMessage('Alert saved! We will notify you on WhatsApp.');
+        setAlertPhone('');
+      } else {
+        setAlertStatus('error');
+        setAlertMessage(data.error || 'Failed to save alert');
+      }
+    } catch (err) {
+      setAlertStatus('error');
+      setAlertMessage('Network error. Please try again.');
+    }
+  };
 
   // Compute sorted PGs
   const getSortedPgs = () => {
@@ -254,14 +298,45 @@ export default function Home() {
         </p>
         
         <AiSearchBar onSearch={handleSearch} defaultLocation={userLocation} externalQuery={externalQuery} />
+
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '20px', flexWrap: 'wrap' }}>
+          <div style={{ background: 'rgba(162, 53, 255, 0.1)', border: '1px solid var(--primary)', color: 'var(--primary)', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            🎉 100% Zero Brokerage
+          </div>
+          <div style={{ background: 'rgba(255, 61, 144, 0.1)', border: '1px solid var(--secondary)', color: 'var(--secondary)', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            ✅ Verified PG Listings
+          </div>
+        </div>
       </section>
 
       {/* Results Section */}
       <section className="container" id="results-section" ref={resultsRef} style={{ paddingBottom: '60px' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '50px', color: 'var(--text-muted)' }}>
-            <div style={{ fontSize: '40px', marginBottom: '16px', display: 'inline-block' }} className="spin-animation">🔍</div>
-            <p style={{ fontSize: '16px', transition: 'all 0.3s ease' }}>{loadingText}</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{ background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--surface-border)', overflow: 'hidden' }}>
+                <div style={{ width: '100%', height: '200px', background: 'var(--surface-hover)', animation: 'pulse 1.5s infinite' }}></div>
+                <div style={{ padding: '20px' }}>
+                  <div style={{ width: '70%', height: '24px', background: 'var(--surface-hover)', borderRadius: '4px', marginBottom: '12px', animation: 'pulse 1.5s infinite' }}></div>
+                  <div style={{ width: '40%', height: '16px', background: 'var(--surface-hover)', borderRadius: '4px', marginBottom: '16px', animation: 'pulse 1.5s infinite' }}></div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{ width: '80px', height: '24px', background: 'var(--surface-hover)', borderRadius: '12px', animation: 'pulse 1.5s infinite' }}></div>
+                    <div style={{ width: '80px', height: '24px', background: 'var(--surface-hover)', borderRadius: '12px', animation: 'pulse 1.5s infinite' }}></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--primary)', marginTop: '20px', fontWeight: 'bold' }}>
+              <div style={{ fontSize: '30px', marginBottom: '10px', display: 'inline-block' }} className="spin-animation">🔍</div>
+              <p>{loadingText}</p>
+            </div>
+            <style>{`
+              @keyframes pulse {
+                0% { opacity: 0.6; }
+                50% { opacity: 0.3; }
+                100% { opacity: 0.6; }
+              }
+            `}</style>
           </div>
         ) : pgs.length > 0 ? (
           <>
@@ -322,6 +397,7 @@ export default function Home() {
                 <div className="grid-auto-fit" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
                   {sortedPgs.map((pg: any, idx: number) => {
                     const id = pg._id || pg.id;
+                    const isCompared = compareList.some(c => (c._id || c.id) === id);
                     return (
                       <PGCard 
                         key={`${id}-${idx}`} 
@@ -330,6 +406,21 @@ export default function Home() {
                         initialSaved={savedPropertyIds.includes(id)}
                         onMouseEnter={() => setHoveredPgId(id)}
                         onMouseLeave={() => setHoveredPgId(null)}
+                        isCompared={isCompared}
+                        onCompareToggle={(selectedPg) => {
+                          setCompareList(prev => {
+                            const exists = prev.some(c => (c._id || c.id) === (selectedPg._id || selectedPg.id));
+                            if (exists) {
+                              return prev.filter(c => (c._id || c.id) !== (selectedPg._id || selectedPg.id));
+                            } else {
+                              if (prev.length >= 3) {
+                                alert("You can only compare up to 3 PGs at a time.");
+                                return prev;
+                              }
+                              return [...prev, selectedPg];
+                            }
+                          });
+                        }}
                       />
                     );
                   })}
@@ -353,10 +444,48 @@ export default function Home() {
             </div>
           </>
         ) : hasSearched ? (
-          <div className="empty-state">
-            <span className="empty-icon">🏠</span>
-            <h3>No PGs found for this search</h3>
-            <p>Try a different location or broader requirements</p>
+          <div className="empty-state" style={{ padding: '40px 20px', textAlign: 'center', background: 'var(--surface)', borderRadius: '24px', border: '1px dashed var(--primary)', maxWidth: '600px', margin: '0 auto' }}>
+            <div style={{ fontSize: '60px', marginBottom: '20px', animation: 'bounce 2s infinite' }}>🥺</div>
+            <h3 style={{ fontSize: '24px', marginBottom: '10px', color: 'var(--text)' }}>Oops! No perfect matches found yet.</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '30px', fontSize: '16px' }}>
+              We couldn&apos;t find a PG matching those exact requirements right now.
+              But don&apos;t worry, new PGs are added every day!
+            </p>
+            <div style={{ padding: '20px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '16px', marginBottom: '20px' }}>
+              <h4 style={{ marginBottom: '15px', color: 'var(--primary)' }}>Want to be the first to know?</h4>
+              <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '15px' }}>
+                We can send you a WhatsApp alert the moment a PG matches this search!
+              </p>
+              
+              {alertStatus === 'success' ? (
+                <div style={{ padding: '15px', background: 'rgba(0, 200, 83, 0.1)', color: '#00c853', borderRadius: '8px', border: '1px solid #00c853', fontWeight: 'bold' }}>
+                  {alertMessage}
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', gap: '10px', maxWidth: '400px', margin: '0 auto' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Enter your WhatsApp number" 
+                      value={alertPhone}
+                      onChange={(e) => setAlertPhone(e.target.value)}
+                      style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} 
+                    />
+                    <button 
+                      onClick={handleAlertSubmit}
+                      disabled={alertStatus === 'loading'}
+                      style={{ padding: '12px 24px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', opacity: alertStatus === 'loading' ? 0.7 : 1 }}
+                    >
+                      {alertStatus === 'loading' ? 'Saving...' : 'Notify Me 🔔'}
+                    </button>
+                  </div>
+                  {alertStatus === 'error' && (
+                    <p style={{ color: '#ff3d3d', fontSize: '12px', marginTop: '10px' }}>{alertMessage}</p>
+                  )}
+                </>
+              )}
+            </div>
+            <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '15px' }}>Or try one of these popular searches:</p>
             <div className="suggestion-chips" style={{ justifyContent: 'center' }}>
               {['Boys PG in Gurgaon', 'Girls PG with AC', 'Budget PG under ₹5000'].map((sug, i) => (
                 <button key={i} className="suggestion-chip" onClick={() => handlePopularSearch(sug)}>
@@ -364,6 +493,12 @@ export default function Home() {
                 </button>
               ))}
             </div>
+            <style>{`
+              @keyframes bounce {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-10px); }
+              }
+            `}</style>
           </div>
         ) : null}
       </section>
@@ -469,7 +604,6 @@ export default function Home() {
             <div className="footer-links">
               <a href="#" onClick={(e) => { e.preventDefault(); setActiveModal('about'); }}>About Us</a>
               <a href="#" onClick={(e) => { e.preventDefault(); setActiveModal('howItWorks'); }}>How It Works</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); setActiveModal('listProperty'); }}>List Your Property</a>
               <a href="#" onClick={(e) => { e.preventDefault(); setActiveModal('contact'); }}>Contact</a>
               <a href="#" onClick={(e) => { e.preventDefault(); setActiveModal('privacy'); }}>Privacy Policy</a>
               <a href="#" onClick={(e) => { e.preventDefault(); setActiveModal('terms'); }}>Terms of Service</a>
@@ -478,7 +612,73 @@ export default function Home() {
           </footer>
 
           {/* Footer Modals */}
-          <FooterModals activeModal={activeModal} onClose={() => setActiveModal(null)} />
+          <FooterModals activeModal={activeModal} setActiveModal={setActiveModal} />
+
+          {/* Floating Compare Bar */}
+          {compareList.length > 0 && (
+            <div style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', padding: '16px 24px', borderRadius: '32px', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: '20px', zIndex: 100, border: '1px solid var(--primary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontWeight: 'bold' }}>{compareList.length} / 3</span>
+                <span style={{ color: 'var(--text-muted)' }}>Selected</span>
+              </div>
+              <button 
+                onClick={() => setShowCompareModal(true)}
+                style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '10px 24px', borderRadius: '24px', fontWeight: 'bold', cursor: 'pointer' }}
+              >
+                Compare Now
+              </button>
+              <button 
+                onClick={() => setCompareList([])}
+                style={{ background: 'transparent', color: 'var(--text-muted)', border: 'none', cursor: 'pointer', fontSize: '20px', padding: '4px' }}
+              >
+                &times;
+              </button>
+            </div>
+          )}
+
+          {/* Compare Modal */}
+          {showCompareModal && (
+            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+              <div style={{ background: 'var(--background)', width: '100%', maxWidth: '1000px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '24px', border: '1px solid var(--surface-border)', position: 'relative' }}>
+                <button 
+                  onClick={() => setShowCompareModal(false)}
+                  style={{ position: 'absolute', top: '20px', right: '20px', background: 'var(--surface)', border: 'none', width: '40px', height: '40px', borderRadius: '50%', fontSize: '24px', cursor: 'pointer', zIndex: 10 }}
+                >
+                  &times;
+                </button>
+                <div style={{ padding: '30px' }}>
+                  <h2 style={{ fontSize: '28px', marginBottom: '30px', textAlign: 'center' }}>Comparing {compareList.length} Properties</h2>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: `repeat(${compareList.length}, 1fr)`, gap: '20px' }}>
+                    {compareList.map((pg, i) => (
+                      <div key={i} style={{ background: 'var(--surface)', padding: '20px', borderRadius: '16px', border: '1px solid var(--surface-border)' }}>
+                        <div style={{ width: '100%', height: '150px', borderRadius: '12px', overflow: 'hidden', marginBottom: '15px' }}>
+                          <img src={pg.media?.[0] || pg.images?.[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                        <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>{pg.name}</h3>
+                        <p style={{ color: 'var(--secondary)', fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>₹{pg.pricing?.monthly_rent || 'N/A'}<span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 'normal' }}>/mo</span></p>
+                        
+                        <div style={{ marginBottom: '15px' }}>
+                          <strong style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: 'var(--text-muted)' }}>Gender</strong>
+                          <span style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '4px 10px', borderRadius: '12px', fontSize: '14px' }}>{pg.gender_type}</span>
+                        </div>
+
+                        <div>
+                          <strong style={{ display: 'block', marginBottom: '10px', fontSize: '12px', color: 'var(--text-muted)' }}>Amenities</strong>
+                          <ul style={{ paddingLeft: '20px', fontSize: '14px', margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {pg.amenities?.slice(0, 8).map((a: string, idx: number) => (
+                              <li key={idx}>{a}</li>
+                            ))}
+                            {pg.amenities?.length > 8 && <li>+{pg.amenities.length - 8} more</li>}
+                          </ul>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </main>

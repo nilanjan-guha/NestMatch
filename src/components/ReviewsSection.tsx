@@ -32,6 +32,9 @@ export default function ReviewsSection({ propertyId }: { propertyId: string }) {
     }
   };
 
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [googleMapsUrl, setGoogleMapsUrl] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isSignedIn) {
@@ -53,9 +56,17 @@ export default function ReviewsSection({ propertyId }: { propertyId: string }) {
       const data = await res.json();
       if (data.success) {
         toast.success('Review submitted successfully!');
-        setComment('');
-        setRating(5);
         fetchReviews(); // Refresh list
+        
+        // If rating is high, ask them to copy to Google Maps
+        if (rating >= 4) {
+          // You can replace this with actual Google Maps place ID link from property data if available
+          setGoogleMapsUrl('https://search.google.com/local/writereview?placeid=ChIJN1t_tDeuEmsRUsoyG83frY4');
+          setShowGoogleModal(true);
+        } else {
+          setComment('');
+          setRating(5);
+        }
       } else {
         toast.error(data.error || 'Failed to submit review');
       }
@@ -138,6 +149,46 @@ export default function ReviewsSection({ propertyId }: { propertyId: string }) {
         </div>
       ) : (
         <p style={{ color: 'var(--text-muted)' }}>No reviews yet. Be the first to review!</p>
+      )}
+
+      {/* Google Maps Redirect Modal */}
+      {showGoogleModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: 'var(--background)', padding: '30px', borderRadius: '12px', maxWidth: '400px', width: '90%', textAlign: 'center', border: '1px solid var(--surface-border)' }}>
+            <h3 style={{ fontSize: '24px', marginBottom: '15px' }}>Thank you! 🎉</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>
+              We're so glad you had a great experience. Would you mind copying your review and pasting it on Google Maps? It really helps us!
+            </p>
+            <div style={{ background: 'var(--surface)', padding: '15px', borderRadius: '8px', marginBottom: '20px', textAlign: 'left', fontSize: '14px', color: 'var(--foreground)' }}>
+              "{comment}"
+            </div>
+            <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(comment);
+                  toast.success('Review copied!');
+                  window.open(googleMapsUrl, '_blank');
+                  setShowGoogleModal(false);
+                  setComment('');
+                  setRating(5);
+                }}
+                style={{ background: 'linear-gradient(45deg, var(--primary), var(--secondary))', color: 'white', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
+              >
+                Copy & Open Google Maps
+              </button>
+              <button 
+                onClick={() => {
+                  setShowGoogleModal(false);
+                  setComment('');
+                  setRating(5);
+                }}
+                style={{ background: 'transparent', color: 'var(--text-muted)', padding: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+              >
+                No thanks
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

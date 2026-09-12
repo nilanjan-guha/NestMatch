@@ -23,7 +23,8 @@ export default function EditPropertyForm({ property }: { property: any }) {
     },
     amenities: property.amenities ? property.amenities.join(', ') : '',
     rules: property.rules ? property.rules.join(', ') : '',
-    media: property.media ? property.media.join(', ') : ''
+    media: property.media ? property.media.join(', ') : '',
+    video_url: property.video_url || ''
   });
   const [files, setFiles] = useState<File[]>([]);
 
@@ -169,7 +170,9 @@ export default function EditPropertyForm({ property }: { property: any }) {
                   style={inputStyle} 
                 />
                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Or add image URLs manually below (keep existing ones if any):</span>
-                <input type="text" name="media" placeholder="Image/Video URLs (comma separated)" value={formData.media} onChange={handleChange} style={inputStyle} />
+                <input type="text" name="media" placeholder="Image URLs (comma separated)" value={formData.media} onChange={handleChange} style={inputStyle} />
+                <label style={{ color: 'var(--text-muted)', marginTop: '10px' }}>Virtual Tour / YouTube Video URL (Optional)</label>
+                <input type="url" name="video_url" placeholder="https://youtube.com/watch?v=..." value={formData.video_url} onChange={handleChange} style={inputStyle} />
               </div>
             </div>
           </div>

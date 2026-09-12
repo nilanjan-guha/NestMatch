@@ -60,7 +60,9 @@ export default function PGDetailsModal({
         <div style={{ padding: '30px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
             <div>
-              <h2 style={{ fontSize: '28px', marginBottom: '8px' }}>{pg.name}</h2>
+              <a href={`/pg/${pg._id || pg.id}`} target="_blank" style={{ color: 'inherit', textDecoration: 'none' }}>
+                <h2 style={{ fontSize: '28px', marginBottom: '8px' }}>{pg.name} <span style={{fontSize:'16px', color:'var(--primary)'}}>↗</span></h2>
+              </a>
               <p style={{ color: 'var(--text-muted)', fontSize: '16px' }}>{pg.address?.street ? `${pg.address.street}, ` : ''}{pg.address?.city}, {pg.address?.state} {pg.address?.zip_code ? `- ${pg.address.zip_code}` : ''}</p>
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -109,6 +111,11 @@ export default function PGDetailsModal({
             {pg.websiteUri && (
               <a href={pg.websiteUri} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.3)', color: '#a855f7', padding: '10px 18px', borderRadius: '10px', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold' }}>
                 🌐 Visit Website
+              </a>
+            )}
+            {pg.video_url && (
+              <a href={pg.video_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '10px 18px', borderRadius: '10px', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold' }}>
+                ▶️ Watch Video Tour
               </a>
             )}
           </div>

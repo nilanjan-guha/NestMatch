@@ -1,9 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MediaCarousel from './MediaCarousel';
 import { toast } from 'react-hot-toast';
 import ReviewsSection from './ReviewsSection';
 import PGDetailsModal from './PGDetailsModal';
+import confetti from 'canvas-confetti';
 
 export default function PGCard({ 
   pg, 
@@ -11,20 +12,30 @@ export default function PGCard({
   currentUserRole = null, 
   initialSaved = false,
   onMouseEnter,
-  onMouseLeave
+  onMouseLeave,
+  isCompared = false,
+  onCompareToggle
 }: { 
   pg: any, 
   isOwnerView?: boolean, 
   currentUserRole?: string | null, 
   initialSaved?: boolean,
   onMouseEnter?: () => void,
-  onMouseLeave?: () => void
+  onMouseLeave?: () => void,
+  isCompared?: boolean,
+  onCompareToggle?: (pg: any) => void
 }) {
   const [saving, setSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(initialSaved);
   const [booking, setBooking] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [activeViewers, setActiveViewers] = useState(2);
   const isFromAPI = pg.amenities?.includes('Google Maps Verified');
+
+  useEffect(() => {
+    // Generate a random number of viewers between 2 and 15
+    setActiveViewers(Math.floor(Math.random() * 14) + 2);
+  }, []);
 
   // Smart media resolver: empty arrays are truthy in JS, so check .length
   const getMedia = (): string[] => {
@@ -48,6 +59,13 @@ export default function PGCard({
       if (data.success) {
         setIsSaved(data.saved);
         toast.success(data.saved ? 'Added to Watchlist ❤️' : 'Removed from Watchlist 💔');
+        if (data.saved) {
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        }
       } else {
         toast.error(data.error || 'Failed to save property');
       }
@@ -98,6 +116,31 @@ export default function PGCard({
       >
         <div style={{ position: 'relative' }}>
           <MediaCarousel media={pgMedia} height="200px" objectFit="cover" disableFullScreen={true} />
+          
+          {onCompareToggle && (
+            <div style={{ position: 'absolute', top: '15px', left: '15px', display: 'flex', gap: '10px', flexDirection: 'column' }}>
+              <div 
+                style={{ background: isCompared ? 'var(--primary)' : 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(5px)' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCompareToggle(pg);
+                }}
+              >
+                <input type="checkbox" checked={isCompared} onChange={() => {}} style={{ cursor: 'pointer' }} />
+                Compare
+              </div>
+              <div style={{ background: 'rgba(255, 61, 144, 0.9)', padding: '4px 10px', borderRadius: '12px', fontSize: '10px', fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', animation: 'pulse 2s infinite' }}>
+                <span style={{ display: 'inline-block', width: '6px', height: '6px', background: 'white', borderRadius: '50%' }}></span> {activeViewers} people looking
+              </div>
+            </div>
+          )}
+
+          {!onCompareToggle && (
+            <div style={{ position: 'absolute', top: '15px', left: '15px', background: 'rgba(255, 61, 144, 0.9)', padding: '4px 10px', borderRadius: '12px', fontSize: '10px', fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', animation: 'pulse 2s infinite' }}>
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', background: 'white', borderRadius: '50%' }}></span> {activeViewers} people looking
+            </div>
+          )}
+
           <button 
             onClick={handleSave}
             disabled={saving}

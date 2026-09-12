@@ -84,45 +84,6 @@ export default function FooterModals({ activeModal, onClose }: { activeModal: Mo
       )
     },
 
-    listProperty: {
-      title: '🏡 List Your Property',
-      content: (
-        <div style={{ lineHeight: '1.8' }}>
-          <p style={{ fontSize: '16px', marginBottom: '24px', color: 'var(--text-muted)' }}>
-            Own a PG or rental property? List it on NestMatch and reach thousands of potential tenants!
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginBottom: '24px' }}>
-            {[
-              { step: '1', icon: '📝', title: 'Sign Up as Owner', desc: 'Create a free account on NestMatch and select "List My Property" role during onboarding.' },
-              { step: '2', icon: '📸', title: 'Add Property Details', desc: 'Fill in your PG details — name, address, photos, pricing, amenities, room types, and house rules.' },
-              { step: '3', icon: '✅', title: 'Go Live', desc: 'Submit your listing and it goes live instantly! Tenants can find, view, and book visits to your property.' },
-              { step: '4', icon: '📊', title: 'Manage Bookings', desc: 'Track visitor interest, update availability, edit pricing, and manage your property from your dashboard.' },
-            ].map((item) => (
-              <div key={item.step} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', background: 'var(--surface)', padding: '16px', borderRadius: '14px', border: '1px solid var(--surface-border)' }}>
-                <span style={{ fontSize: '28px' }}>{item.icon}</span>
-                <div>
-                  <h4 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '4px' }}>Step {item.step}: {item.title}</h4>
-                  <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ textAlign: 'center', padding: '20px', background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(236,72,153,0.12))', borderRadius: '14px' }}>
-            <p style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '10px' }}>Ready to list?</p>
-            <a href="/onboarding" style={{
-              display: 'inline-block', padding: '12px 32px', borderRadius: '12px',
-              background: 'linear-gradient(45deg, var(--primary), var(--secondary))',
-              color: 'white', textDecoration: 'none', fontWeight: 'bold', fontSize: '15px'
-            }}>
-              Sign Up Now →
-            </a>
-          </div>
-        </div>
-      )
-    },
-
     contact: {
       title: '📞 Contact Us',
       content: (
