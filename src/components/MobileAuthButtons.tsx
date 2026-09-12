@@ -22,7 +22,7 @@ export default function MobileAuthButtons() {
       <SignUpButton mode="modal" fallbackRedirectUrl="/onboarding">
         <button 
           onClick={closeMenu}
-          style={{ height: '40px', padding: '0 20px', background: 'var(--primary)', color: 'white', border: 'none', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', width: '100%' }}>
+          style={{ height: '40px', padding: '0 20px', background: '#4338ca', color: 'white', border: 'none', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', width: '100%' }}>
           Register
         </button>
       </SignUpButton>

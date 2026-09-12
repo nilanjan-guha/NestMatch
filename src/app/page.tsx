@@ -632,22 +632,22 @@ export default function Home() {
             <div className="features-grid">
               <div className="feature-card">
                 <span className="feature-icon">🤖</span>
-                <h4>AI-Powered Matching</h4>
+                <h3>AI-Powered Matching</h3>
                 <p>Our Gemini AI understands what you need and finds the perfect match</p>
               </div>
               <div className="feature-card">
                 <span className="feature-icon">🛡️</span>
-                <h4>Verified & Safe</h4>
+                <h3>Verified & Safe</h3>
                 <p>Every property is verified with real photos, reviews, and safety scores</p>
               </div>
               <div className="feature-card">
                 <span className="feature-icon">📍</span>
-                <h4>Google Maps Verified</h4>
+                <h3>Google Maps Verified</h3>
                 <p>Real-time data from Google Maps for accurate location and distance</p>
               </div>
               <div className="feature-card">
                 <span className="feature-icon">💬</span>
-                <h4>Real Reviews</h4>
+                <h3>Real Reviews</h3>
                 <p>Honest reviews from real tenants so you know what to expect</p>
               </div>
             </div>
