@@ -101,18 +101,18 @@ export default async function Navbar() {
                   <>
                     {(!isSuperAdmin && role === 'owner') && (
                       hasProperties ? (
-                        <Link href="/owner/dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--foreground)', textDecoration: 'none', fontWeight: '500', borderRadius: '8px', background: 'var(--surface)', width: '100%', whiteSpace: 'nowrap' }}>
+                        <Link href="/owner/dashboard" prefetch={false} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--foreground)', textDecoration: 'none', fontWeight: '500', borderRadius: '8px', background: 'var(--surface)', width: '100%', whiteSpace: 'nowrap' }}>
                           Check my PG
                         </Link>
                       ) : (
-                        <Link href="/owner/add" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', borderRadius: '8px', color: 'white', textDecoration: 'none', fontWeight: '500', width: '100%', whiteSpace: 'nowrap' }}>
+                        <Link href="/owner/add" prefetch={false} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', borderRadius: '8px', color: 'white', textDecoration: 'none', fontWeight: '500', width: '100%', whiteSpace: 'nowrap' }}>
                           List your PG
                         </Link>
                       )
                     )}
 
                     {(isSuperAdmin || role === 'admin') && (
-                      <Link href="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--primary)', textDecoration: 'none', fontWeight: 'bold', borderRadius: '8px', background: 'var(--surface)', width: '100%', whiteSpace: 'nowrap' }}>
+                      <Link href="/admin/dashboard" prefetch={false} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px', padding: '0 16px', color: 'var(--primary)', textDecoration: 'none', fontWeight: 'bold', borderRadius: '8px', background: 'var(--surface)', width: '100%', whiteSpace: 'nowrap' }}>
                         Admin Dashboard
                       </Link>
                     )}
