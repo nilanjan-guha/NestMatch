@@ -285,8 +285,8 @@ export async function POST(req: Request) {
       // Extract meaningful words (basic stop words filter)
       const stopWords = ['in', 'near', 'a', 'an', 'the', 'for', 'with', 'and', 'or', 'under', 'rupees', 'rs', 'pg', 'hostel', 'cheap', 'best', 'location', 'requirements'];
       const keywords = query.split(/[\s,.:]+/)
-        .map(w => w.trim())
-        .filter(w => w.length > 3 && !stopWords.includes(w.toLowerCase()))
+        .map((w: string) => w.trim())
+        .filter((w: string) => w.length > 3 && !stopWords.includes(w.toLowerCase()))
         .join('|');
 
       if (keywords) {
