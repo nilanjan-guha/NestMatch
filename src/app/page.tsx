@@ -560,7 +560,7 @@ export default function Home() {
                   <div key={i} className="popular-card" onClick={() => handlePopularSearch(query)}>
                     <span className="popular-icon">🕒</span>
                     <div>
-                      <h4>{query.length > 30 ? query.substring(0, 30) + '...' : query}</h4>
+                      <h3>{query.length > 30 ? query.substring(0, 30) + '...' : query}</h3>
                       <p>Resume search</p>
                     </div>
                   </div>
@@ -570,7 +570,7 @@ export default function Home() {
                   <div key={i} className="popular-card" onClick={() => handlePopularSearch(item.query)}>
                     <span className="popular-icon">{item.emoji}</span>
                     <div>
-                      <h4>{item.title}</h4>
+                      <h3>{item.title}</h3>
                       <p>{item.subtitle}</p>
                     </div>
                   </div>

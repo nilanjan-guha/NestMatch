@@ -175,9 +175,9 @@ export default function RootLayout({
           {/* Google Analytics - gtag.js */}
           <Script
             src="https://www.googletagmanager.com/gtag/js?id=G-L2TCLM5GRQ"
-            strategy="afterInteractive"
+            strategy="lazyOnload"
           />
-          <Script id="google-analytics" strategy="afterInteractive">
+          <Script id="google-analytics" strategy="lazyOnload">
             {`
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
@@ -189,7 +189,7 @@ export default function RootLayout({
           {/* Google AdSense */}
           <Script
             src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1589107667014849"
-            strategy="afterInteractive"
+            strategy="lazyOnload"
             crossOrigin="anonymous"
           />
 
