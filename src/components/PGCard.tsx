@@ -165,7 +165,7 @@ export default function PGCard({
             </span>
           </div>
           <p style={{ color: 'var(--text-muted)', marginBottom: '16px', fontSize: '14px' }}>
-            {pg.address.city}, {pg.address.state} • {pg.gender_type}
+            {pg.address.city}, {pg.address.state} • {pg.gender_type && pg.gender_type !== 'gender_type_placeholder' ? pg.gender_type : 'Unspecified'}
           </p>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
             {pg.amenities?.slice(0, 3).map((amenity: string, idx: number) => (

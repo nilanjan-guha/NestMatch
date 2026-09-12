@@ -56,7 +56,7 @@ export default function WatchlistTable({ properties }: { properties: any[] }) {
                   {pg.name}
                 </td>
                 <td style={{ padding: '12px' }}>{pg.address?.city}, {pg.address?.state}</td>
-                <td style={{ padding: '12px' }}>{pg.gender_type}</td>
+                <td style={{ padding: '12px' }}>{pg.gender_type && pg.gender_type !== 'gender_type_placeholder' ? pg.gender_type : 'Unspecified'}</td>
                 <td style={{ padding: '12px', color: 'var(--secondary)' }}>₹{pg.pricing?.monthly_rent}</td>
                 <td style={{ padding: '12px', display: 'flex', gap: '10px' }}>
                   <button 

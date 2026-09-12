@@ -45,7 +45,7 @@ export default function PGDetailsClient({ pg }: { pg: any }) {
         </div>
 
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-          <span style={{ background: 'var(--surface)', padding: '8px 16px', borderRadius: '20px', fontSize: '14px' }}>{pg.gender_type}</span>
+          <span style={{ background: 'var(--surface)', padding: '8px 16px', borderRadius: '20px', fontSize: '14px' }}>{pg.gender_type && pg.gender_type !== 'gender_type_placeholder' ? pg.gender_type : 'Unspecified'}</span>
           <span style={{ background: 'var(--primary)', color: 'white', padding: '8px 16px', borderRadius: '20px', fontSize: '14px' }}>★ {pg.rating || 0} ({pg.userRatingCount || 0} reviews)</span>
         </div>
 
