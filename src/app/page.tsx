@@ -550,32 +550,6 @@ export default function Home() {
       {/* ========== CONTENT SECTIONS (shown when not loading) ========== */}
       {!loading && (
         <>
-          {/* How It Works */}
-          <section className="how-it-works fade-in-section">
-            <h2 className="section-title">How It Works</h2>
-            <p className="section-subtitle">Finding your ideal PG is as easy as 1-2-3</p>
-            <div className="steps-grid">
-              <div className="step-card">
-                <span className="step-icon">📍</span>
-                <span className="step-number">1</span>
-                <h3>Set Your Location</h3>
-                <p>Enter your preferred area, city, or use GPS to auto-detect your location</p>
-              </div>
-              <div className="step-card">
-                <span className="step-icon">🔍</span>
-                <span className="step-number">2</span>
-                <h3>Describe Your Ideal PG</h3>
-                <p>Tell us your budget, amenities, gender preference — our AI understands natural language</p>
-              </div>
-              <div className="step-card">
-                <span className="step-icon">🏠</span>
-                <span className="step-number">3</span>
-                <h3>Get Matched Instantly</h3>
-                <p>Our AI scans hundreds of PGs and Google Maps to find the best matches for you</p>
-              </div>
-            </div>
-          </section>
-
           {/* Popular/Recent Searches */}
           <section className="popular-searches fade-in-section">
             <h2 className="section-title">{recentSearches.length > 0 ? "Recent Searches" : "Popular Searches"}</h2>
@@ -602,6 +576,32 @@ export default function Home() {
                   </div>
                 ))
               )}
+            </div>
+          </section>
+
+          {/* How It Works */}
+          <section className="how-it-works fade-in-section">
+            <h2 className="section-title">How It Works</h2>
+            <p className="section-subtitle">Finding your ideal PG is as easy as 1-2-3</p>
+            <div className="steps-grid">
+              <div className="step-card">
+                <span className="step-icon">📍</span>
+                <span className="step-number">1</span>
+                <h3>Set Your Location</h3>
+                <p>Enter your preferred area, city, or use GPS to auto-detect your location</p>
+              </div>
+              <div className="step-card">
+                <span className="step-icon">🔍</span>
+                <span className="step-number">2</span>
+                <h3>Describe Your Ideal PG</h3>
+                <p>Tell us your budget, amenities, gender preference — our AI understands natural language</p>
+              </div>
+              <div className="step-card">
+                <span className="step-icon">🏠</span>
+                <span className="step-number">3</span>
+                <h3>Get Matched Instantly</h3>
+                <p>Our AI scans hundreds of PGs and Google Maps to find the best matches for you</p>
+              </div>
             </div>
           </section>
 

@@ -218,9 +218,9 @@ export async function POST(req: Request) {
       baseParams = geminiParams || claudeParams || groqParams || hfParams || openaiParams || null;
       const backupParamsList = [geminiParams, claudeParams, groqParams, hfParams, openaiParams].filter(p => p && p !== baseParams);
 
-      if (baseParams) {
-        searchParams = { ...baseParams };
+      searchParams = baseParams ? { ...baseParams } : {};
 
+      if (baseParams) {
         // Merge missing fields from backup models
         for (const backup of backupParamsList) {
           if (!searchParams.max_budget && backup.max_budget) searchParams.max_budget = backup.max_budget;
@@ -231,52 +231,85 @@ export async function POST(req: Request) {
           const allAmenities = new Set([...(searchParams.amenities || []), ...(backup.amenities || [])]);
           searchParams.amenities = Array.from(allAmenities);
         }
-        console.log("=== MERGED QUAD-AI PARAMS ===", searchParams);
+      }
 
-        if (searchParams.max_budget && searchParams.max_budget > 0) {
-          matchStage['pricing.monthly_rent'] = { $lte: searchParams.max_budget };
+      // Hard Regex Fallbacks to ensure constraints are respected even if AI is fuzzy
+      if (!searchParams.max_budget) {
+        const budgetMatch = query.match(/(?:under|below|max|budget)\s*(\d+)/i) || query.match(/(\d+)\s*(?:rs|rupees|inr)/i);
+        if (budgetMatch) {
+          searchParams.max_budget = parseInt(budgetMatch[1], 10);
         }
-        if (searchParams.gender && searchParams.gender !== 'null') {
-          matchStage['gender_type'] = { $regex: searchParams.gender, $options: 'i' };
+      }
+      
+      if (!searchParams.gender) {
+        if (query.match(/\b(boys|male|men)\b/i)) searchParams.gender = 'Male';
+        else if (query.match(/\b(girls|female|women|ladies)\b/i)) searchParams.gender = 'Female';
+        else if (query.match(/\b(unisex|couple|coliving|co-living)\b/i)) searchParams.gender = 'Unisex';
+      }
+
+      console.log("=== MERGED QUAD-AI PARAMS ===", searchParams);
+
+      if (searchParams.max_budget && searchParams.max_budget > 0) {
+        matchStage['pricing.monthly_rent'] = { $lte: Number(searchParams.max_budget) };
+      }
+      if (searchParams.gender && searchParams.gender !== 'null') {
+        matchStage['gender_type'] = { $regex: searchParams.gender, $options: 'i' };
+      }
+      if (searchParams.amenities && Array.isArray(searchParams.amenities) && searchParams.amenities.length > 0) {
+        const amenityRegex = searchParams.amenities.filter((a: string) => a !== 'null').map((a: string) => new RegExp(a, 'i'));
+        if (amenityRegex.length > 0) {
+          matchStage['amenities'] = { $all: amenityRegex };
         }
-        if (searchParams.amenities && Array.isArray(searchParams.amenities) && searchParams.amenities.length > 0) {
-          const amenityRegex = searchParams.amenities.filter((a: string) => a !== 'null').map((a: string) => new RegExp(a, 'i'));
-          if (amenityRegex.length > 0) {
-            matchStage['amenities'] = { $all: amenityRegex };
-          }
+      }
+      if (searchParams.city && searchParams.city !== 'null') {
+        // Only apply text location filters if we aren't already doing a geospatial coordinate search
+        if (!coordinates || coordinates.length !== 2) {
+          matchStage['address.city'] = { $regex: searchParams.city, $options: 'i' };
         }
-        if (searchParams.city && searchParams.city !== 'null') {
-          // Only apply text location filters if we aren't already doing a geospatial coordinate search
-          if (!coordinates || coordinates.length !== 2) {
-            matchStage['address.city'] = { $regex: searchParams.city, $options: 'i' };
-          }
-        }
-        if (searchParams.street_or_area && searchParams.street_or_area !== 'null') {
-          if (!coordinates || coordinates.length !== 2) {
-            matchStage['$or'] = [
-              { name: { $regex: searchParams.street_or_area, $options: 'i' } },
-              { 'address.street': { $regex: searchParams.street_or_area, $options: 'i' } },
-              { description: { $regex: searchParams.street_or_area, $options: 'i' } }
-            ];
-          }
+      }
+      if (searchParams.street_or_area && searchParams.street_or_area !== 'null') {
+        if (!coordinates || coordinates.length !== 2) {
+          matchStage['$or'] = [
+            { name: { $regex: searchParams.street_or_area, $options: 'i' } },
+            { 'address.street': { $regex: searchParams.street_or_area, $options: 'i' } },
+            { description: { $regex: searchParams.street_or_area, $options: 'i' } }
+          ];
         }
       }
     }
 
-    // Fallback if AI fails or if the user wants fuzzy word matching when strict parameters aren't enough
-    // The user explicitly wants it to use words from the sentence if strict fails.
-    if (query && Object.keys(matchStage).length === 0) {
-      console.log("Using fallback basic search...");
-      const keywords = query.split(' ').filter((w: string) => w.length > 3).join('|');
+    // 1.5 Always apply fuzzy word matching on the query to ensure specific keywords 
+    // (like "Infosys", "balcony", etc.) are matched even if the AI didn't strict-categorize them.
+    if (query) {
+      console.log("Applying keyword text search constraint...");
+      // Extract meaningful words (basic stop words filter)
+      const stopWords = ['in', 'near', 'a', 'an', 'the', 'for', 'with', 'and', 'or', 'under', 'rupees', 'rs', 'pg', 'hostel', 'cheap', 'best', 'location', 'requirements'];
+      const keywords = query.split(/[\s,.:]+/)
+        .map(w => w.trim())
+        .filter(w => w.length > 3 && !stopWords.includes(w.toLowerCase()))
+        .join('|');
+
       if (keywords) {
-        matchStage = {
+        const keywordMatch = {
           $or: [
             { name: { $regex: keywords, $options: 'i' } },
             { description: { $regex: keywords, $options: 'i' } },
             { 'address.city': { $regex: keywords, $options: 'i' } },
-            { 'address.street': { $regex: keywords, $options: 'i' } }
+            { 'address.street': { $regex: keywords, $options: 'i' } },
+            { amenities: { $regex: keywords, $options: 'i' } } // Also search amenities for raw keywords
           ]
         };
+        
+        if (Object.keys(matchStage).length > 0) {
+          matchStage = {
+            $and: [
+              matchStage,
+              keywordMatch
+            ]
+          };
+        } else {
+          matchStage = keywordMatch;
+        }
       }
     }
 
@@ -457,7 +490,21 @@ INSTRUCTIONS:
                 if (extractPromises.length > 0) {
                   // Use Promise.any to get the FASTEST valid response
                   const priceData = await Promise.any(extractPromises).catch(() => ({}));
-                  extractedRent = priceData.rent || Math.floor(Math.random() * (15000 - 5000 + 1) + 5000); // Fallback estimate if all fail
+                  let baseFallbackRent = Math.floor(Math.random() * (15000 - 5000 + 1) + 5000);
+                  
+                  // If there's a strict budget constraint, make sure the fallback generator respects it 
+                  // otherwise Google Places will be completely excluded from affordable searches
+                  if (searchParams?.max_budget && baseFallbackRent > searchParams.max_budget) {
+                    baseFallbackRent = Math.floor(Math.random() * (searchParams.max_budget - 2000)) + 2000;
+                  }
+                  
+                  extractedRent = priceData.rent || baseFallbackRent;
+                  
+                  // Double check one last time before final assignment
+                  if (searchParams?.max_budget && extractedRent > searchParams.max_budget) {
+                     extractedRent = searchParams.max_budget - 500;
+                  }
+
                   extractedDeposit = priceData.deposit || (extractedRent * 1.5);
                   aiDescription = priceData.description || '';
                   console.log(`💰 ${place.displayName?.text}: ₹${extractedRent}/mo (${priceData.rent_source || 'estimated fallback'})`);

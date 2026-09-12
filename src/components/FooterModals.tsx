@@ -12,10 +12,10 @@ export default function FooterModals({ activeModal, onClose }: { activeModal: Mo
       content: (
         <div style={{ lineHeight: '1.8' }}>
           <p style={{ fontSize: '16px', marginBottom: '20px', color: 'var(--text-muted)' }}>
-            NestMatch is an AI-powered PG (Paying Guest) finding platform that helps you discover the perfect home away from home. 
+            NestMatch is an AI-powered PG (Paying Guest) finding platform that helps you discover the perfect home away from home.
             Built with love to solve the real struggle of finding safe, affordable, and comfortable PG accommodations.
           </p>
-          
+
           <div style={{ background: 'rgba(99,102,241,0.08)', padding: '20px', borderRadius: '14px', marginBottom: '20px' }}>
             <h3 style={{ fontSize: '18px', marginBottom: '14px', color: 'var(--primary)' }}>👨‍💻 Created By</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -37,7 +37,7 @@ export default function FooterModals({ activeModal, onClose }: { activeModal: Mo
           <div style={{ background: 'rgba(236,72,153,0.08)', padding: '20px', borderRadius: '14px' }}>
             <h3 style={{ fontSize: '18px', marginBottom: '14px', color: 'var(--secondary)' }}>🚀 Our Mission</h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
-              To make PG hunting stress-free by combining AI intelligence with real Google Maps data, 
+              To make PG hunting stress-free by combining AI intelligence with real Google Maps data,
               so you can find verified, safe, and affordable accommodation in seconds — not days.
             </p>
           </div>
@@ -161,8 +161,15 @@ export default function FooterModals({ activeModal, onClose }: { activeModal: Mo
           <h3 style={{ fontSize: '16px', color: 'var(--foreground)', marginTop: '20px', marginBottom: '8px' }}>4. Your Rights</h3>
           <p>You have the right to access, update, or delete your personal data at any time. Contact us at <a href="mailto:nilanjanguha8@gmail.com" style={{ color: 'var(--secondary)' }}>nilanjanguha8@gmail.com</a> for any data-related requests.</p>
 
-          <h3 style={{ fontSize: '16px', color: 'var(--foreground)', marginTop: '20px', marginBottom: '8px' }}>5. Cookies</h3>
-          <p>We use cookies for authentication sessions, user preferences, and analytics. By using NestMatch, you consent to the use of cookies as described.</p>
+          <h3 style={{ fontSize: '16px', color: 'var(--foreground)', marginTop: '20px', marginBottom: '8px' }}>5. Cookies and Advertising</h3>
+          <h3 style={{ fontSize: '16px', color: 'var(--foreground)', marginTop: '20px', marginBottom: '8px' }}>5. Cookies and Advertising</h3>
+          <p>We use cookies for authentication sessions, user preferences, and analytics. Additionally, we use third-party advertising companies, including Google, to serve ads when you visit our website.</p>
+          <ul style={{ paddingLeft: '20px', marginTop: '6px' }}>
+            <li>Third-party vendors, including Google, use cookies to serve ads based on your prior visits to NestMatch or other websites.</li>
+            <li>Google's use of advertising cookies enables it and its partners to serve ads to you based on your visit to our site and/or other sites on the Internet.</li>
+            <li>You may opt out of personalized advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--secondary)' }}>Google Ads Settings</a>.</li>
+          </ul>
+          <p style={{ marginTop: '10px' }}>By using NestMatch, you consent to the use of cookies as described.</p>
         </div>
       )
     },
@@ -224,7 +231,7 @@ export default function FooterModals({ activeModal, onClose }: { activeModal: Mo
   if (!current) return null;
 
   return (
-    <div 
+    <div
       style={{
         position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
         background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
@@ -233,7 +240,7 @@ export default function FooterModals({ activeModal, onClose }: { activeModal: Mo
       }}
       onClick={onClose}
     >
-      <div 
+      <div
         style={{
           width: '100%', maxWidth: '650px', maxHeight: '85vh', overflowY: 'auto',
           background: 'var(--background)', border: '1px solid var(--surface-border)',
@@ -250,7 +257,7 @@ export default function FooterModals({ activeModal, onClose }: { activeModal: Mo
           zIndex: 2, borderRadius: '20px 20px 0 0'
         }}>
           <h2 style={{ fontSize: '22px', fontWeight: '800' }}>{current.title}</h2>
-          <button 
+          <button
             onClick={onClose}
             style={{
               background: 'var(--surface)', border: '1px solid var(--surface-border)',

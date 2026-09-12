@@ -41,12 +41,28 @@ export default function AiSearchBar({
 
   useEffect(() => {
     if (externalQuery) {
-      setRequirements(externalQuery.query);
-      if (!location.trim()) {
+      let parsedLocation = '';
+      let parsedRequirements = externalQuery.query;
+
+      // Extract location if it's a recent search saved in the specific format
+      const match = externalQuery.query.match(/^Location:\s*(.*?)\.\s*Requirements:\s*(.*)$/i);
+      if (match) {
+        parsedLocation = match[1];
+        parsedRequirements = match[2];
+      }
+
+      setRequirements(parsedRequirements);
+      
+      const effectiveLocation = parsedLocation || location;
+      if (parsedLocation) {
+        setLocation(parsedLocation);
+      }
+
+      if (!effectiveLocation.trim()) {
         toast.error('Please select the location first!');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-        const finalQuery = `Location: ${location}. Requirements: ${externalQuery.query}`;
+        const finalQuery = `Location: ${effectiveLocation}. Requirements: ${parsedRequirements}`;
         onSearch(finalQuery, coords);
         setTimeout(() => {
           window.scrollBy({ top: window.innerHeight * 0.6, behavior: 'smooth' });

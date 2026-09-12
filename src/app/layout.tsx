@@ -96,6 +96,7 @@ import Navbar from "@/components/Navbar";
 import { Toaster } from "react-hot-toast";
 import { ClerkProvider } from "@clerk/nextjs";
 import Script from "next/script";
+import NextTopLoader from 'nextjs-toploader';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -137,6 +138,18 @@ export default function RootLayout({
         <head />
 
         <body suppressHydrationWarning>
+          <NextTopLoader 
+            color="#6366f1"
+            initialPosition={0.08}
+            crawlSpeed={200}
+            height={3}
+            crawl={true}
+            showSpinner={false}
+            easing="ease"
+            speed={200}
+            shadow="0 0 10px #6366f1,0 0 5px #6366f1"
+            zIndex={1600000}
+          />
           {/* Google Analytics - gtag.js */}
           <Script
             src="https://www.googletagmanager.com/gtag/js?id=G-L2TCLM5GRQ"
