@@ -99,7 +99,7 @@ export default function PGDetailsModal({
           </div>
 
           <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-            <span style={{ background: 'var(--surface)', padding: '8px 16px', borderRadius: '20px', fontSize: '13px' }}>{pg.gender_type && pg.gender_type !== 'gender_type_placeholder' ? pg.gender_type : 'Unspecified'}</span>
+            <span style={{ background: 'var(--surface)', padding: '8px 16px', borderRadius: '20px', fontSize: '13px' }}>{pg.gender_type && pg.gender_type !== 'gender_type_placeholder' && pg.gender_type !== 'gender_placeholder' ? pg.gender_type : 'Unspecified'}</span>
             <span style={{ background: 'var(--primary)', color: 'white', padding: '8px 16px', borderRadius: '20px', fontSize: '13px' }}>★ {pg.rating || 0} ({pg.userRatingCount || pg.rating_count || 0} reviews)</span>
             {pg.businessStatus && pg.businessStatus !== 'UNKNOWN' && (
               <span style={{ background: pg.businessStatus === 'OPERATIONAL' ? 'rgba(74,222,128,0.15)' : 'rgba(239,68,68,0.15)', color: pg.businessStatus === 'OPERATIONAL' ? '#4ade80' : '#ef4444', padding: '8px 16px', borderRadius: '20px', fontSize: '13px' }}>
