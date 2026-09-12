@@ -328,7 +328,7 @@ export default function Home() {
       </section>
 
       {/* Results Section */}
-      <section className="container" id="results-section" ref={resultsRef} style={{ paddingBottom: '60px' }}>
+      <section className="container" id="results-section" ref={resultsRef} style={{ paddingBottom: '60px', minHeight: '500px' }}>
         {loading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
             {[1, 2, 3].map(i => (
