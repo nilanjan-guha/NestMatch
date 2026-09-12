@@ -99,7 +99,21 @@ export default function PGDetailsModal({
           </div>
 
           <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-            <span style={{ background: 'var(--surface)', padding: '8px 16px', borderRadius: '20px', fontSize: '13px' }}>{pg.gender_type && pg.gender_type !== 'gender_type_placeholder' && pg.gender_type !== 'gender_placeholder' ? pg.gender_type : 'Unspecified'}</span>
+            {(() => {
+              const g = pg.gender_type;
+              if (!g || g.includes('placeholder') || g.toLowerCase() === 'unspecified') return null;
+              const lower = g.toLowerCase();
+              let displayGender = null;
+              if (lower.includes('female') || lower.includes('girl') || lower.includes('women')) displayGender = 'Female';
+              else if (lower.includes('unisex') || lower.includes('coliv') || lower.includes('co-liv') || lower.includes('couple') || lower.includes('any')) displayGender = 'Unisex';
+              else if (lower.includes('male') || lower.includes('boy') || lower.includes('men')) displayGender = 'Male';
+              if (!displayGender) return null;
+              return (
+                <span style={{ background: 'var(--surface)', padding: '8px 16px', borderRadius: '20px', fontSize: '13px' }}>
+                  {displayGender}
+                </span>
+              );
+            })()}
             <span style={{ background: 'var(--primary)', color: 'white', padding: '8px 16px', borderRadius: '20px', fontSize: '13px' }}>★ {pg.rating || 0} ({pg.userRatingCount || pg.rating_count || 0} reviews)</span>
             {pg.businessStatus && pg.businessStatus !== 'UNKNOWN' && (
               <span style={{ background: pg.businessStatus === 'OPERATIONAL' ? 'rgba(74,222,128,0.15)' : 'rgba(239,68,68,0.15)', color: pg.businessStatus === 'OPERATIONAL' ? '#4ade80' : '#ef4444', padding: '8px 16px', borderRadius: '20px', fontSize: '13px' }}>

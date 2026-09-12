@@ -157,7 +157,17 @@ export default function PGCard({
             </span>
           </div>
           <p style={{ color: 'var(--text-muted)', marginBottom: '16px', fontSize: '14px' }}>
-            {pg.address.city}, {pg.address.state} • {pg.gender_type && pg.gender_type !== 'gender_type_placeholder' && pg.gender_type !== 'gender_placeholder' ? pg.gender_type : 'Unspecified'}
+            {pg.address.city}, {pg.address.state}
+            {(() => {
+              const g = pg.gender_type;
+              if (!g || g.includes('placeholder') || g.toLowerCase() === 'unspecified') return null;
+              const lower = g.toLowerCase();
+              let displayGender = null;
+              if (lower.includes('female') || lower.includes('girl') || lower.includes('women')) displayGender = 'Female';
+              else if (lower.includes('unisex') || lower.includes('coliv') || lower.includes('co-liv') || lower.includes('couple') || lower.includes('any')) displayGender = 'Unisex';
+              else if (lower.includes('male') || lower.includes('boy') || lower.includes('men')) displayGender = 'Male';
+              return displayGender ? ` • ${displayGender}` : null;
+            })()}
           </p>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
             {pg.amenities?.slice(0, 3).map((amenity: string, idx: number) => (
