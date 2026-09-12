@@ -4,6 +4,8 @@ import { PGProperty } from '@/models/PGProperty';
 import PGCard from '@/components/PGCard';
 import Link from 'next/link';
 
+export const revalidate = 86400; // Cache these dynamically generated pages for 24 hours (ISR)
+
 type Props = {
   params: Promise<{ slug: string[] }>;
 };

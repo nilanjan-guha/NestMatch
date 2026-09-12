@@ -1,133 +1,97 @@
 import { MetadataRoute } from 'next';
+import topCities from '@/data/indian-cities.json';
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://www.nestmatch.co.in';
+const baseUrl = 'https://www.nestmatch.co.in';
 
-  // Define our core static routes
-  const routes = [
-    '',
-    '/owner/add',
-  ].map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date(),
-    changeFrequency: 'daily' as const,
-    priority: route === '' ? 1.0 : 0.8,
-  }));
+const pgTypes = [
+  '',
+  'boys-pg',
+  'girls-pg',
+  'coliving',
+  'single-room',
+  'luxury-pg',
+  'student-hostel',
+  'working-professionals-pg',
+  'ac-pg',
+  'non-ac-pg',
+  'pg-with-food',
+  'pg-without-food',
+  'cheap-pg',
+  'affordable-pg',
+  'premium-pg',
+  'pg-near-me',
+  'double-sharing-pg',
+  'triple-sharing-pg',
+  'four-sharing-pg',
+  'furnished-pg',
+  'semi-furnished-pg',
+  'unfurnished-pg',
+  'mens-hostel',
+  'womens-hostel',
+  'executive-pg',
+  'pg-for-students',
+  'pg-for-couples',
+  'independent-room',
+  'pg-with-attached-bathroom',
+  'pg-with-wifi',
+  'pg-without-brokerage',
+  'zero-brokerage-pg',
+  'best-pg',
+  'top-pg'
+];
 
-  // Define the matrix for Programmatic SEO (Massive list of ALL Indian Cities & Districts)
-  const topCities = [
-    'mumbai', 'delhi', 'bangalore', 'hyderabad', 'ahmedabad', 'chennai', 'kolkata', 'surat', 'pune', 'jaipur',
-    'lucknow', 'kanpur', 'nagpur', 'indore', 'thane', 'bhopal', 'visakhapatnam', 'pimpri-chinchwad', 'patna', 'vadodara',
-    'ghaziabad', 'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut', 'rajkot', 'kalyan-dombivli', 'vasai-virar', 'varanasi',
-    'srinagar', 'aurangabad', 'dhanbad', 'amritsar', 'navi-mumbai', 'allahabad', 'howrah', 'ranchi', 'gwalior', 'jabalpur',
-    'coimbatore', 'vijayawada', 'jodhpur', 'madurai', 'raipur', 'kota', 'guwahati', 'chandigarh', 'solapur', 'hubballi-dharwad',
-    'bareilly', 'moradabad', 'mysore', 'gurugram', 'aligarh', 'jalandhar', 'tiruchirappalli', 'bhubaneswar', 'salem', 'mira-bhayandar',
-    'warangal', 'thiruvananthapuram', 'bhiwandi', 'saharanpur', 'guntur', 'amravati', 'bikaner', 'noida', 'jamshedpur', 'bhilai',
-    'cuttack', 'firozabad', 'kochi', 'nellore', 'bhavnagar', 'dehradun', 'durgapur', 'asansol', 'rourkela', 'nanded',
-    'kolhapur', 'ajmer', 'akola', 'gulbarga', 'jamnagar', 'ujjain', 'loni', 'siliguri', 'jhansi', 'ulhasnagar',
-    'jammu', 'sangli-miraj-kupwad', 'mangalore', 'erode', 'belgaum', 'ambattur', 'tirunelveli', 'malegaon', 'gaya', 'jalgaon',
-    'udaipur', 'maheshtala', 'davanagere', 'kozhikode', 'akbarpur', 'rajpur-sonarpur', 'rajahmundry', 'bokaro', 'south-dumdum', 'bellary',
-    'patiala', 'gopalpur', 'agartala', 'bhagalpur', 'muzaffarnagar', 'bhatpara', 'panihati', 'latur', 'dhule', 'tirupati',
-    'rohtak', 'korba', 'bhilwara', 'berhampur', 'muzaffarpur', 'ahmednagar', 'mathura', 'kollam', 'avadi', 'kadapa',
-    'kamarhati', 'sambalpur', 'bilaspur', 'shahjahanpur', 'satara', 'bijapur', 'rampur', 'shivamogga', 'chandrapur', 'junagadh',
-    'thrissur', 'alwar', 'bardhaman', 'kulti', 'kakinada', 'nizamabad', 'parbhani', 'tumkur', 'khammam', 'ouzhukarai',
-    'bihar-sharif', 'panipat', 'darbhanga', 'bally', 'aizawl', 'dewas', 'ichalkaranji', 'karnal', 'bathinda', 'jalna',
-    'eluru', 'barasat', 'kirari-suleman-nagar', 'purnia', 'satna', 'mau', 'sonipat', 'farrukhabad', 'sagar', 'durg',
-    'imphal', 'ratlam', 'hapur', 'arrah', 'karimnagar', 'anantapur', 'etawah', 'ambernath', 'bharatpur', 'begusarai',
-    'new-delhi', 'gandhidham', 'baranagar', 'tiruvottiyur', 'puducherry', 'sikar', 'thoothukudi', 'rewa', 'mirzapur', 'raichur',
-    'pali', 'ramagundam', 'haridwar', 'vijayanagaram', 'katihar', 'nagercoil', 'sri-ganganagar', 'karawal-nagar', 'mango', 'thanjavur',
-    'bulandshahr', 'uluberia', 'murwara', 'sambhal', 'singrauli', 'nadiad', 'secunderabad', 'naihati', 'yamunanagar', 'bidhan-nagar',
-    'pallavaram', 'bidar', 'munger', 'panchkula', 'burhanpur', 'kharagpur', 'dindigul', 'gandhinagar', 'hospet', 'nangloi-jat',
-    'english-bazar', 'ongole', 'deoghar', 'chapra', 'haldia', 'khandwa', 'nandyal', 'chittoor', 'morena', 'amroha',
-    'anand', 'bhind', 'bhalswa-jahangir-pur', 'madhyamgram', 'bhiwani', 'berhampore', 'ambala', 'morbi', 'fatehpur', 'raebareli',
-    'khora', 'bhusawal', 'orai', 'bahraich', 'vellore', 'mahesana', 'raiganj', 'sirsa', 'danapur', 'serampore',
-    'sultan-pur-majra', 'guna', 'jaunpur', 'panvel', 'shivpuri', 'surendranagar-dudhrej', 'unnao', 'chinsurah', 'alappuzha', 'kottayam',
-    'machilipatnam', 'shimla', 'adoni', 'udupi', 'katar-gam', 'tenali', 'proddatur', 'saharsa', 'hindupur', 'sasaram',
-    'hajipur', 'bhimavaram', 'kumbakonam', 'bongaigaon', 'deori', 'madanapalle', 'hassan', 'bhatkal', 'bagalkot', 'hosur',
-    'kavali', 'chirala', 'narasaraopet', 'srikakulam', 'guntakal', 'dharmavaram', 'gudivada', 'mangalagiri', 'palakkad', 'malappuram',
-    'thalassery', 'ponnani', 'vadakara', 'tiruvalla', 'changanassery', 'kothamangalam', 'chalakudy', 'payyanur', 'shoranur', 'varkala',
-    'neyyattinkara', 'kayamkulam', 'punalur', 'kochi', 'alwaye', 'baddi', 'solan', 'nahan', 'mandi', 'dharamshala',
-    'kangra', 'dalhousie', 'chamba', 'kullu', 'manali', 'palampur', 'una', 'hamirpur', 'bilaspur', 'rohru',
-    'rampur', 'kargil', 'leh', 'anantnag', 'baramulla', 'kathua', 'udhampur', 'poonch', 'rajouri', 'sopore',
-    'bandipore', 'kupwara', 'kulgam', 'shopian', 'pulwama', 'ganderbal', 'budgam', 'pahalgam', 'gulmarg', 'sonamarg',
-    'haridwar', 'roorkee', 'haldwani', 'rudrapur', 'kashipur', 'rishikesh', 'ramnagar', 'pithoragarh', 'manglaur', 'nainital',
-    'mussoorie', 'tehri', 'pauri', 'almora', 'bageshwar', 'champawat', 'uttarkashi', 'chamoli', 'rudraprayag', 'kotdwar',
-    'lakhimpur', 'sitapur', 'hardoi', 'unnao', 'budaun', 'pilibhit', 'shahjahanpur', 'lakhimpur-kheri', 'gonda', 'bahraich',
-    'shravasti', 'balrampur', 'siddharthnagar', 'basti', 'sant-kabir-nagar', 'mahrajganj', 'kushinagar', 'deoria', 'azamgarh', 'mau',
-    'ballia', 'ghazipur', 'varanasi', 'chandauli', 'mirzapur', 'sonbhadra', 'bhadohi', 'jaunpur', 'pratapgarh', 'amethi',
-    'sultanpur', 'faizabad', 'ambedkar-nagar', 'barabanki', 'lucknow', 'raebareli', 'kanpur', 'kanpur-dehat', 'etawah', 'auraiya',
-    'kannauj', 'farrukhabad', 'mainpuri', 'etawah', 'agra', 'firozabad', 'manipuri', 'mathura', 'aligarh', 'hathras',
-    'kasganj', 'etah', 'bulandshahr', 'gautam-buddha-nagar', 'ghaziabad', 'meerut', 'baghpat', 'muzaffarnagar', 'shamli', 'saharanpur',
-    'bijnor', 'amroha', 'moradabad', 'rampur', 'bareilly', 'pilibhit', 'shahjahanpur', 'darjeeling', 'kalimpong', 'kurseong',
-    'mirik', 'siliguri', 'jalpaiguri', 'alipurduar', 'cooch-behar', 'raiganj', 'balurghat', 'malda', 'english-bazar', 'berhampore',
-    'krishnanagar', 'santipur', 'ranaghat', 'kalyani', 'habra', 'barasat', 'bongaon', 'basirhat', 'taki', 'barrackpore',
-    'naihati', 'bhatpara', 'titagarh', 'kamarhati', 'panihati', 'barahanagar', 'dum-dum', 'bidhan-nagar', 'new-town', 'rajarhat',
-    'madhyamgram', 'barasat', 'kalyani', 'krishnanagar', 'shantipur', 'habra', 'basirhat', 'taki', 'bongaon', 'bagula',
-    'chakdaha', 'ranaghat', 'krishnanagar', 'shantipur', 'nabadwip', 'katwa', 'kalna', 'bardhaman', 'durgapur', 'asansol',
-    'midnapore', 'kharagpur', 'tamluk', 'haldia', 'contai', 'purulia', 'bankura', 'bishnupur', 'suri', 'bolpur',
-    'rampurhat', 'sainthia', 'dhubri', 'bongaigaon', 'goalpara', 'barpeta', 'nalbari', 'kamrup', 'guwahati', 'dispur',
-    'morigaon', 'nagaon', 'tezpur', 'dhekiajuli', 'biswanath-chariali', 'gohpur', 'north-lakhimpur', 'dhemaji', 'dibrugarh', 'tinsukia',
-    'digboi', 'margarita', 'sivasagar', 'nazira', 'jorhat', 'dergaon', 'golaghat', 'bokakhat', 'karbi-anglong', 'diphu',
-    'bhavani', 'udumalaipettai', 'pollachi', 'valparai', 'mettupalayam', 'ooty', 'coonoor', 'kotagiri', 'gudalur', 'bhavanisagar',
-    'sathyamangalam', 'gobi', 'dharapuram', 'kangeyam', 'vellakoil', 'karur', 'aravakurichi', 'manapparai', 'srirangam', 'lalgudi',
-    'musiri', 'thuraiyur', 'perambalur', 'ariyalur', 'jayankondam', 'chidambaram', 'cuddalore', 'panruti', 'neylveli', 'vriddhachalam',
-    'kallakurichi', 'tindivanam', 'viluppuram', 'tiruvannamalai', 'polur', 'arani', 'vandavasi', 'cheyyar', 'kancheepuram', 'chengalpattu',
-    'tambaram', 'poonamallee', 'avadi', 'tiruvallur', 'ponneri', 'gummidipoondi', 'tiruttani', 'arrakkonam', 'ranipet', 'arcot',
-    'vellore', 'gudiyatham', 'vaniyambadi', 'ambur', 'tirupattur', 'jolarpettai', 'krishnagiri', 'bargur', 'mathur', 'dharmapuri',
-    'pennagaram', 'harur', 'pappireddipatti', 'palacode', 'marandahalli', 'kariyamangalam', 'karimangalam', 'palakkodu', 'papparapatti', 'kambam',
-    'theni', 'periyakulam', 'bodinayakanur', 'usilampatti', 'tirumangalam', 'melur', 'vadipatti', 'sholavandan', 'parangipettai', 'bhuvanagiri'
-  ];
+const MAX_URLS_PER_SITEMAP = 40000; // Stay below Google's 50k limit
 
-  // Define the matrix for Programmatic SEO (Massive list of search keywords)
-  const pgTypes = [
-    '', // Just the city
-    'boys-pg',
-    'girls-pg',
-    'coliving',
-    'single-room',
-    'luxury-pg',
-    'student-hostel',
-    'working-professionals-pg',
-    'ac-pg',
-    'non-ac-pg',
-    'pg-with-food',
-    'pg-without-food',
-    'cheap-pg',
-    'affordable-pg',
-    'premium-pg',
-    'pg-near-me',
-    'double-sharing-pg',
-    'triple-sharing-pg',
-    'four-sharing-pg',
-    'furnished-pg',
-    'semi-furnished-pg',
-    'unfurnished-pg',
-    'mens-hostel',
-    'womens-hostel',
-    'executive-pg',
-    'pg-for-students',
-    'pg-for-couples',
-    'independent-room',
-    'pg-with-attached-bathroom',
-    'pg-with-wifi',
-    'pg-without-brokerage',
-    'zero-brokerage-pg',
-    'best-pg',
-    'top-pg'
-  ];
-
-  const seoRoutes = topCities.flatMap((city) => {
-    return pgTypes.map((type) => {
-      const slug = type ? `/pgs-in/${city}/${type}` : `/pgs-in/${city}`;
-      return {
-        url: `${baseUrl}${slug}`,
-        lastModified: new Date(),
-        changeFrequency: 'daily' as const,
-        priority: 0.9,
-      };
-    });
-  });
-
-  return [...routes, ...seoRoutes];
+export async function generateSitemaps() {
+  const totalCombinations = topCities.length * pgTypes.length;
+  const numberOfSitemaps = Math.ceil(totalCombinations / MAX_URLS_PER_SITEMAP);
+  
+  const sitemaps = [];
+  // Ensure we always have at least 1 sitemap
+  for (let i = 0; i < Math.max(1, numberOfSitemaps); i++) {
+    sitemaps.push({ id: i });
+  }
+  
+  return sitemaps;
 }
 
+export default async function sitemap({ id }: { id: number }): Promise<MetadataRoute.Sitemap> {
+  const staticRoutes: MetadataRoute.Sitemap = id === 0 ? [
+    {
+      url: `${baseUrl}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 1.0,
+    },
+    {
+      url: `${baseUrl}/owner/add`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.8,
+    }
+  ] : [];
+
+  const startIdx = id * MAX_URLS_PER_SITEMAP;
+  const endIdx = startIdx + MAX_URLS_PER_SITEMAP;
+  const totalCombinations = topCities.length * pgTypes.length;
+  
+  const sitemapUrls: MetadataRoute.Sitemap = [];
+  
+  for (let i = startIdx; i < Math.min(endIdx, totalCombinations); i++) {
+    const cityIdx = Math.floor(i / pgTypes.length);
+    const typeIdx = i % pgTypes.length;
+    
+    const city = topCities[cityIdx];
+    const type = pgTypes[typeIdx];
+    
+    const slug = type ? `/pgs-in/${city}/${type}` : `/pgs-in/${city}`;
+    sitemapUrls.push({
+      url: `${baseUrl}${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    });
+  }
+  
+  return [...staticRoutes, ...sitemapUrls];
+}
