@@ -121,7 +121,7 @@ body {
 }
 
 /* For Firefox */
-* {
+html, body {
   scrollbar-width: thin;
   scrollbar-color: var(--surface-border) var(--background);
 }
