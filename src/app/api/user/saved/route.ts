@@ -66,10 +66,16 @@ export async function POST(req: Request) {
     if (existing) {
       // Toggle off (remove)
       await SavedProperty.deleteOne({ _id: existing._id });
+      try {
+        await PGProperty.updateOne({ _id: property_id }, { $inc: { savesCount: -1 } });
+      } catch (e) {} // Ignore error for non-ObjectId (e.g. Google Maps places)
       return NextResponse.json({ success: true, saved: false });
     } else {
       // Toggle on (add)
       await SavedProperty.create({ user_id, property_id, property_data: property_data || null });
+      try {
+        await PGProperty.updateOne({ _id: property_id }, { $inc: { savesCount: 1 } });
+      } catch (e) {} // Ignore error for non-ObjectId
       return NextResponse.json({ success: true, saved: true });
     }
   } catch (error: any) {

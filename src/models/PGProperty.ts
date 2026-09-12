@@ -27,6 +27,7 @@ export interface IPGProperty extends Document {
   };
   rating: number;
   userRatingCount: number;
+  savesCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -65,7 +66,8 @@ const PGPropertySchema: Schema = new Schema({
     room_details: { type: String, default: '' }
   },
   rating: { type: Number, default: 0 },
-  userRatingCount: { type: Number, default: 0 }
+  userRatingCount: { type: Number, default: 0 },
+  savesCount: { type: Number, default: 0 }
 }, {
   timestamps: true
 });

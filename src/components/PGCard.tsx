@@ -27,15 +27,10 @@ export default function PGCard({
 }) {
   const [saving, setSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(initialSaved);
+  const [localSavesCount, setLocalSavesCount] = useState(pg.savesCount || 0);
   const [booking, setBooking] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [activeViewers, setActiveViewers] = useState(2);
   const isFromAPI = pg.amenities?.includes('Google Maps Verified');
-
-  useEffect(() => {
-    // Generate a random number of viewers between 2 and 15
-    setActiveViewers(Math.floor(Math.random() * 14) + 2);
-  }, []);
 
   // Smart media resolver: empty arrays are truthy in JS, so check .length
   const getMedia = (): string[] => {
@@ -58,6 +53,7 @@ export default function PGCard({
       const data = await res.json();
       if (data.success) {
         setIsSaved(data.saved);
+        setLocalSavesCount((prev: number) => data.saved ? prev + 1 : prev - 1);
         toast.success(data.saved ? 'Added to Watchlist ❤️' : 'Removed from Watchlist 💔');
         if (data.saved) {
           confetti({
@@ -130,10 +126,12 @@ export default function PGCard({
             </div>
           )}
 
-          {/* Moved activeViewers to the bottom-left of the image to prevent clutter */}
-          <div style={{ position: 'absolute', bottom: '15px', left: '15px', background: 'rgba(255, 61, 144, 0.95)', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '5px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', animation: 'pulse 2s infinite', backdropFilter: 'blur(4px)' }}>
-            <span style={{ display: 'inline-block', width: '6px', height: '6px', background: 'white', borderRadius: '50%' }}></span> {activeViewers} people looking
-          </div>
+          {/* Real saves count instead of fake active viewers */}
+          {localSavesCount > 0 && (
+            <div style={{ position: 'absolute', bottom: '15px', left: '15px', background: 'rgba(255, 61, 144, 0.95)', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '5px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', backdropFilter: 'blur(4px)' }}>
+              ❤️ {localSavesCount} {localSavesCount === 1 ? 'person saved this' : 'people saved this'}
+            </div>
+          )}
 
           <button 
             onClick={handleSave}
