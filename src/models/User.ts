@@ -11,6 +11,12 @@ export interface IUser extends Document {
   role: 'searcher' | 'owner' | 'admin';
   onboarded: boolean;
   recent_searches?: string[];
+  lifestyle?: {
+    sleep: string;
+    diet: string;
+    smoking: string;
+    social: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -26,6 +32,12 @@ const UserSchema: Schema = new Schema({
   role: { type: String, enum: ['searcher', 'owner', 'admin'], default: 'searcher' },
   onboarded: { type: Boolean, default: false },
   recent_searches: { type: [String], default: [] },
+  lifestyle: {
+    sleep: { type: String },
+    diet: { type: String },
+    smoking: { type: String },
+    social: { type: String },
+  },
 }, {
   timestamps: true 
 });

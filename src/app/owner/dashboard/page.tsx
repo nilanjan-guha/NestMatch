@@ -8,6 +8,7 @@ import { PGProperty } from '@/models/PGProperty';
 import { BookingInterest } from '@/models/BookingInterest';
 import PropertyTable from '@/components/PropertyTable';
 import BookingStatusUpdater from '@/components/BookingStatusUpdater';
+import AnalyticsCharts from '@/components/AnalyticsCharts';
 
 export default async function OwnerDashboard() {
   const { userId } = await auth();
@@ -37,9 +38,16 @@ export default async function OwnerDashboard() {
   return (
     <main className="container" style={{ padding: '40px 24px' }}>
       
+      <div style={{ marginBottom: '30px', display: 'flex', alignItems: 'center' }}>
+        <Link href="/" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>← Back to Home</Link>
+      </div>
+
       {/* Analytics Section */}
+      <AnalyticsCharts />
+
+      {/* Booking Interests Table Section */}
       <div className="glass-panel" style={{ padding: '30px', marginBottom: '40px' }}>
-        <h2 style={{ fontSize: '24px', marginBottom: '20px', color: 'var(--primary)' }}>Lead Analytics & Interests</h2>
+        <h2 style={{ fontSize: '24px', marginBottom: '20px', color: 'var(--primary)' }}>Recent Booking Interests</h2>
         {interests.length === 0 ? (
           <p style={{ color: 'var(--text-muted)' }}>No bookings or interests yet. Make sure your properties are well-detailed!</p>
         ) : (

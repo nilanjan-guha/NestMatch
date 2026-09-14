@@ -5,10 +5,16 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import ConfirmModal from './ConfirmModal';
 import MediaCarousel from './MediaCarousel';
+import KycUploadModal from './KycUploadModal';
 
 export default function PropertyTable({ properties }: { properties: any[] }) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [kycUploadingId, setKycUploadingId] = useState<string | null>(null);
+  
+  // KYC Modal state
+  const [kycModalOpen, setKycModalOpen] = useState(false);
+  const [kycProperty, setKycProperty] = useState<any | null>(null);
   
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -52,6 +58,8 @@ export default function PropertyTable({ properties }: { properties: any[] }) {
     setTargetId(null);
   };
 
+  // Replaced by KycUploadModal flow
+
   return (
     <div className="table-responsive-wrapper">
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -61,6 +69,7 @@ export default function PropertyTable({ properties }: { properties: any[] }) {
             <th style={{ padding: '12px' }}>Location</th>
             <th style={{ padding: '12px' }}>Type</th>
             <th style={{ padding: '12px' }}>Monthly Rent</th>
+            <th style={{ padding: '12px' }}>KYC Status</th>
             <th style={{ padding: '12px' }}>Actions</th>
           </tr>
         </thead>
@@ -71,7 +80,52 @@ export default function PropertyTable({ properties }: { properties: any[] }) {
               <td style={{ padding: '12px' }}>{pg.address.city}, {pg.address.state}</td>
               <td style={{ padding: '12px' }}>{pg.gender_type}</td>
               <td style={{ padding: '12px', color: 'var(--secondary)' }}>₹{pg.pricing.monthly_rent}</td>
+              <td style={{ padding: '12px' }}>
+                {pg.kyc_status === 'verified' && <span style={{ color: '#4ade80', fontWeight: 'bold' }}>✅ Verified</span>}
+                {pg.kyc_status === 'pending' && <span style={{ color: '#facc15' }}>⏳ Pending</span>}
+                {pg.kyc_status === 'rejected' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ color: '#ef4444', fontWeight: 'bold' }}>❌ Rejected</span>
+                    {pg.kyc_rejection_reason && (
+                      <span style={{ fontSize: '11px', color: '#fca5a5', maxWidth: '150px', lineHeight: '1.2', background: 'rgba(239,68,68,0.1)', padding: '4px', borderRadius: '4px' }}>
+                        {pg.kyc_rejection_reason}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {(!pg.kyc_status || pg.kyc_status === 'unverified') && <span style={{ color: 'var(--text-muted)' }}>Unverified</span>}
+              </td>
               <td style={{ padding: '12px', display: 'flex', gap: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {(!pg.kyc_status || pg.kyc_status === 'unverified' || pg.kyc_status === 'rejected') ? (
+                    <>
+                      <button 
+                        onClick={() => {
+                          setKycProperty(pg);
+                          setKycModalOpen(true);
+                        }}
+                        style={{ padding: '6px 12px', background: 'linear-gradient(45deg, var(--primary), var(--secondary))', border: 'none', borderRadius: '4px', color: '#fff', cursor: 'pointer', fontWeight: 'bold', textAlign: 'center' }}
+                      >
+                        Upload KYC
+                      </button>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)', textAlign: 'center', maxWidth: '100px', lineHeight: '1.2' }}>
+                        Strict Verification Required
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <button 
+                        disabled
+                        style={{ padding: '6px 12px', background: 'var(--surface-border)', border: 'none', borderRadius: '4px', color: 'var(--text-muted)', cursor: 'not-allowed', fontWeight: 'bold', textAlign: 'center' }}
+                      >
+                        {pg.kyc_status === 'pending' ? 'Wait for Review' : 'KYC Verified'}
+                      </button>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)', textAlign: 'center', maxWidth: '100px', lineHeight: '1.2' }}>
+                        {pg.kyc_status === 'pending' ? 'Under processing' : 'Verification complete'}
+                      </span>
+                    </>
+                  )}
+                </div>
                 <button 
                   onClick={() => setSelectedProperty(pg)}
                   style={{ padding: '6px 12px', background: 'rgba(99, 102, 241, 0.2)', border: '1px solid rgba(99, 102, 241, 0.4)', borderRadius: '4px', color: '#818cf8', cursor: 'pointer' }}
@@ -105,6 +159,21 @@ export default function PropertyTable({ properties }: { properties: any[] }) {
         onCancel={handleCancelDelete}
       />
 
+      {kycProperty && (
+        <KycUploadModal 
+          isOpen={kycModalOpen}
+          onClose={() => setKycModalOpen(false)}
+          propertyId={kycProperty._id.toString()}
+          ownerName={kycProperty.owner_id?.name || 'Owner'}
+          onSuccess={() => {
+            router.refresh(); // Tells Next.js to fetch new data from server
+            setTimeout(() => {
+              window.location.reload(); // Hard refresh to ensure button turns to Wait for Review
+            }, 500);
+          }}
+        />
+      )}
+
       {selectedProperty && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -130,6 +199,15 @@ export default function PropertyTable({ properties }: { properties: any[] }) {
               </h2>
               <div style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>
                 {selectedProperty.address?.city}, {selectedProperty.address?.state} • {selectedProperty.gender_type}
+              </div>
+              <div style={{ marginTop: '12px' }}>
+                <a 
+                  href={`/pg/${selectedProperty._id.toString()}`} 
+                  target="_blank"
+                  style={{ display: 'inline-block', padding: '8px 16px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#3b82f6', borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold' }}
+                >
+                  👁️ View Public Page (How users see it)
+                </a>
               </div>
             </div>
 

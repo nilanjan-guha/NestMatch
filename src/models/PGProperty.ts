@@ -28,6 +28,10 @@ export interface IPGProperty extends Document {
   rating: number;
   userRatingCount: number;
   savesCount: number;
+  is_verified: boolean;
+  kyc_status: 'unverified' | 'pending' | 'verified' | 'rejected';
+  kyc_documents: string[];
+  kyc_rejection_reason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -67,9 +71,16 @@ const PGPropertySchema: Schema = new Schema({
   },
   rating: { type: Number, default: 0 },
   userRatingCount: { type: Number, default: 0 },
-  savesCount: { type: Number, default: 0 }
+  savesCount: { type: Number, default: 0 },
+  is_verified: { type: Boolean, default: false },
+  kyc_status: { type: String, enum: ['unverified', 'pending', 'verified', 'rejected'], default: 'unverified' },
+  kyc_documents: [{ type: String }],
+  kyc_rejection_reason: { type: String, default: '' }
 }, {
   timestamps: true
 });
 
-export const PGProperty: Model<IPGProperty> = mongoose.models.PGProperty || mongoose.model<IPGProperty>('PGProperty', PGPropertySchema);
+if (mongoose.models.PGProperty) {
+  delete mongoose.models.PGProperty;
+}
+export const PGProperty: Model<IPGProperty> = mongoose.model<IPGProperty>('PGProperty', PGPropertySchema);

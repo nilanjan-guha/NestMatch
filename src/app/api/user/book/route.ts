@@ -47,20 +47,34 @@ export async function POST(req: Request) {
         const resend = new Resend(process.env.RESEND_API_KEY);
         
         try {
-          const userEmail = (session.user as any).email || 'test@example.com'; 
+          const searcherEmail = (session.user as any).email || 'test@example.com'; 
+          const searcherName = (session.user as any).name || 'A user'; 
+          const searcherPhone = (session.user as any).phone || 'Not provided';
           
-          await resend.emails.send({
-            from: 'onboarding@resend.dev', // Resend default testing email
-            to: process.env.ADMIN_EMAIL || userEmail,
-            subject: `Visit Scheduled for ${property.name}`,
-            html: `
-              <h2>Visit Scheduled!</h2>
-              <p>Great news! A visit has been scheduled for <strong>${property.name}</strong>.</p>
-              <p>The owner has been notified and will contact you shortly.</p>
-              <br/>
-              <p>Thanks for using NestMatch!</p>
-            `
-          });
+          // Fetch the PG owner to get their email
+          const owner = await User.findById(property.owner_id);
+          const ownerEmail = owner?.email || process.env.ADMIN_EMAIL;
+
+          if (ownerEmail) {
+            await resend.emails.send({
+              from: 'NestMatch <bookings@nestmatch.co.in>', // Using verified domain
+              to: ownerEmail,
+              subject: `New Visit Scheduled for ${property.name}`,
+              html: `
+                <h2>New Visit Request!</h2>
+                <p>Great news! A user has scheduled a visit for your property: <strong>${property.name}</strong>.</p>
+                <h3>Visitor Details:</h3>
+                <ul>
+                  <li><strong>Name:</strong> ${searcherName}</li>
+                  <li><strong>Email:</strong> ${searcherEmail}</li>
+                  <li><strong>Phone:</strong> ${searcherPhone}</li>
+                </ul>
+                <p>Please contact them to arrange the exact time for the visit.</p>
+                <br/>
+                <p>Thanks for using NestMatch!</p>
+              `
+            });
+          }
         } catch (emailError) {
           console.error("Failed to send email with Resend:", emailError);
         }

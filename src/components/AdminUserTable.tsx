@@ -65,19 +65,19 @@ export default function AdminUserTable({ users }: { users: any[] }) {
         <tbody>
           {users.map((u: any) => (
             <tr key={u._id.toString()} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <td style={{ padding: '10px' }}>
+              <td style={{ padding: '10px', verticalAlign: 'top' }}>
                 <div style={{ fontWeight: 'bold' }}>{u.name}</div>
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{u.email}</div>
               </td>
-              <td style={{ padding: '10px' }}>
+              <td style={{ padding: '10px', verticalAlign: 'top' }}>
                 {u.phone || <span style={{ color: 'var(--text-muted)' }}>Not Provided</span>}
               </td>
-              <td style={{ padding: '10px' }}>
+              <td style={{ padding: '10px', verticalAlign: 'top' }}>
                 <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '12px', background: 'rgba(99, 102, 241, 0.2)', color: '#818cf8' }}>
                   {u.role || 'searcher'}
                 </span>
               </td>
-              <td style={{ padding: '10px' }}>
+              <td style={{ padding: '10px', verticalAlign: 'top' }}>
                 {u.isSuperAdminUser ? (
                   <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Super Admin</span>
                 ) : (

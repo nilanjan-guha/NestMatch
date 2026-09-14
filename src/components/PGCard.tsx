@@ -4,6 +4,7 @@ import MediaCarousel from './MediaCarousel';
 import { toast } from 'react-hot-toast';
 import ReviewsSection from './ReviewsSection';
 import PGDetailsModal from './PGDetailsModal';
+import UrgencyBadge from './UrgencyBadge';
 import confetti from 'canvas-confetti';
 
 export default function PGCard({ 
@@ -143,9 +144,19 @@ export default function PGCard({
         </div>
         
         <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+          <div style={{ marginBottom: '12px' }}>
+            <UrgencyBadge propertyId={pg._id || pg.id} />
+          </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
             <div>
-              <h3 style={{ fontSize: '20px', fontWeight: 'bold' }}>{pg.name}</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h3 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{pg.name}</h3>
+                {pg.is_verified && (
+                  <span style={{ fontSize: '12px', background: 'rgba(74, 222, 128, 0.1)', color: '#4ade80', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(74, 222, 128, 0.3)' }} title="Verified by NestMatch">
+                    ✅ Verified
+                  </span>
+                )}
+              </div>
               {pg.distance !== undefined && (
                 <span style={{ fontSize: '12px', color: 'var(--primary)', fontWeight: 'bold' }}>
                   📍 {(pg.distance / 1000).toFixed(1)} km away

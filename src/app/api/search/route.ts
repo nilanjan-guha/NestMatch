@@ -55,10 +55,10 @@ const searchSchema = {
 
 export async function POST(req: Request) {
   try {
-    const { query, coordinates, page = 1, limit = 10 } = await req.json();
+    const { query, coordinates, page = 1, limit = 10, filters = [], advancedFilters = {} } = await req.json();
     await connectToDatabase();
 
-    let matchStage: any = {};
+    let matchStage: any = { kyc_status: 'verified' };
     let searchParams: any = {};
     let baseParams: any = null;
 
@@ -249,11 +249,30 @@ export async function POST(req: Request) {
 
       console.log("=== MERGED QUAD-AI PARAMS ===", searchParams);
 
+      // --- MERGE MANUAL FILTERS ---
+      if (filters && Array.isArray(filters) && filters.length > 0) {
+        if (!searchParams.amenities) searchParams.amenities = [];
+        filters.forEach((f: string) => {
+          if (!searchParams.amenities.includes(f)) {
+            searchParams.amenities.push(f);
+          }
+        });
+      }
+
       if (searchParams.max_budget && searchParams.max_budget > 0) {
         matchStage['pricing.monthly_rent'] = { $lte: Number(searchParams.max_budget) };
       }
+      if (advancedFilters.budget) {
+        matchStage['pricing.monthly_rent'] = { $lte: Number(advancedFilters.budget) };
+      }
       if (searchParams.gender && searchParams.gender !== 'null') {
         matchStage['gender_type'] = { $regex: searchParams.gender, $options: 'i' };
+      }
+      if (advancedFilters.gender && advancedFilters.gender !== 'Any') {
+        matchStage['gender_type'] = { $regex: advancedFilters.gender, $options: 'i' };
+      }
+      if (advancedFilters.roomType && advancedFilters.roomType !== 'Any') {
+        matchStage['capacity.room_details'] = { $regex: advancedFilters.roomType, $options: 'i' };
       }
       if (searchParams.amenities && Array.isArray(searchParams.amenities) && searchParams.amenities.length > 0) {
         const amenityRegex = searchParams.amenities.filter((a: string) => a !== 'null').map((a: string) => new RegExp(a, 'i'));
@@ -640,6 +659,14 @@ INSTRUCTIONS:
                 return !nameLower.includes('boy') && !nameLower.includes('men') && !nameLower.includes('gents');
             }
             return true;
+        });
+      }
+      
+      // Strict matching for amenities
+      if (searchParams.amenities && Array.isArray(searchParams.amenities) && searchParams.amenities.length > 0) {
+        finalGooglePlaces = finalGooglePlaces.filter(pg => {
+            const pgAmenitiesString = (pg.amenities || []).join(' ').toLowerCase();
+            return searchParams.amenities.every((a: string) => pgAmenitiesString.includes(a.toLowerCase()));
         });
       }
     }

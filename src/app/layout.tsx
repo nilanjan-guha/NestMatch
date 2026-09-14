@@ -97,6 +97,7 @@ import { Toaster } from "react-hot-toast";
 import { ClerkProvider } from "@clerk/nextjs";
 import NextTopLoader from 'nextjs-toploader';
 import DeferredScripts from '@/components/DeferredScripts';
+import ChatWidget from '@/components/ChatWidget';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -178,6 +179,7 @@ export default function RootLayout({
           <Toaster position="bottom-right" />
           <Navbar />
           {children}
+          <ChatWidget />
         </body>
       </html>
     </ClerkProvider>

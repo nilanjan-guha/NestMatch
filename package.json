@@ -20,6 +20,7 @@
     "@vis.gl/react-google-maps": "^1.10.0",
     "bcryptjs": "^3.0.3",
     "canvas-confetti": "^1.9.4",
+    "cloudinary": "^2.11.0",
     "mongoose": "^9.9.5",
     "next": "16.3.4",
     "nextjs-toploader": "^3.9.17",
@@ -27,6 +28,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hot-toast": "^2.6.0",
+    "recharts": "^3.10.1",
     "resend": "^6.28.0",
     "svix": "^2.4.0"
   },

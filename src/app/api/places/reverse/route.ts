@@ -25,13 +25,19 @@ export async function GET(req: Request) {
         const result = data.results[0];
         const addressComponents = result.address_components;
         
+        let streetNumber = '';
+        let route = '';
         let city = '';
+        let state = '';
+        let zip_code = '';
         let area = '';
 
         for (const component of addressComponents) {
-          if (component.types.includes('locality')) {
-            city = component.long_name;
-          }
+          if (component.types.includes('street_number')) streetNumber = component.long_name;
+          if (component.types.includes('route')) route = component.long_name;
+          if (component.types.includes('locality')) city = component.long_name;
+          if (component.types.includes('administrative_area_level_1')) state = component.long_name;
+          if (component.types.includes('postal_code')) zip_code = component.long_name;
           if (component.types.includes('sublocality_level_1') || component.types.includes('neighborhood')) {
             area = component.long_name;
           }
@@ -39,8 +45,14 @@ export async function GET(req: Request) {
 
         if (!city) city = 'Unknown City';
 
+        const street_parts = [streetNumber, route, area].filter(Boolean).join(', ');
+
         return NextResponse.json({
-          display_name: area ? `${area}, ${city}` : city
+          display_name: area ? `${area}, ${city}` : city,
+          street_address: street_parts || result.formatted_address,
+          city,
+          state,
+          zip_code
         });
       }
       

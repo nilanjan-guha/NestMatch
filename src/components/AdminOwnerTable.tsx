@@ -78,7 +78,7 @@ export default function AdminOwnerTable({ owners, properties }: { owners: any[],
             return (
               <React.Fragment key={ownerIdStr}>
                 <tr style={{ borderBottom: expandedOwner === ownerIdStr ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '10px' }}>
+                  <td style={{ padding: '10px', verticalAlign: 'top' }}>
                     <div 
                       style={{ fontWeight: 'bold', cursor: 'pointer', color: 'var(--primary)', textDecoration: 'underline' }}
                       onClick={() => {
@@ -97,13 +97,13 @@ export default function AdminOwnerTable({ owners, properties }: { owners: any[],
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{owner.email}</div>
                   </td>
-                  <td style={{ padding: '10px' }}>
+                  <td style={{ padding: '10px', verticalAlign: 'top' }}>
                     {owner.phone || <span style={{ color: 'var(--text-muted)' }}>Not Provided</span>}
                   </td>
-                  <td style={{ padding: '10px' }}>
+                  <td style={{ padding: '10px', verticalAlign: 'top' }}>
                     <span style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{ownerProperties.length}</span> Listed
                   </td>
-                  <td style={{ padding: '10px', display: 'flex', gap: '10px' }}>
+                  <td style={{ padding: '10px', display: 'flex', gap: '10px', verticalAlign: 'top', alignItems: 'flex-start' }}>
                     <button
                       onClick={() => toggleExpand(ownerIdStr)}
                       style={{

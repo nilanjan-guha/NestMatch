@@ -83,7 +83,14 @@ export default function PGDetailsModal({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
             <div>
               <a href={`/pg/${pg._id || pg.id}`} target="_blank" style={{ color: 'inherit', textDecoration: 'none' }}>
-                <h2 style={{ fontSize: '28px', marginBottom: '8px' }}>{pg.name} <span style={{fontSize:'16px', color:'var(--primary)'}}>↗</span></h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <h2 style={{ fontSize: '28px', marginBottom: '8px' }}>{pg.name} <span style={{fontSize:'16px', color:'var(--primary)'}}>↗</span></h2>
+                  {pg.is_verified && (
+                    <span style={{ fontSize: '14px', background: 'rgba(74, 222, 128, 0.1)', color: '#4ade80', padding: '4px 8px', borderRadius: '4px', border: '1px solid rgba(74, 222, 128, 0.3)', marginBottom: '8px' }} title="Verified by NestMatch">
+                      ✅ Verified
+                    </span>
+                  )}
+                </div>
               </a>
               <p style={{ color: 'var(--text-muted)', fontSize: '16px' }}>{pg.address?.street ? `${pg.address.street}, ` : ''}{pg.address?.city}, {pg.address?.state} {pg.address?.zip_code ? `- ${pg.address.zip_code}` : ''}</p>
             </div>
@@ -133,7 +140,7 @@ export default function PGDetailsModal({
           {/* Quick Action Buttons */}
           <div style={{ display: 'flex', gap: '10px', marginBottom: '30px', flexWrap: 'wrap' }}>
             <a 
-              href={pg.googleMapsUri || `https://www.google.com/maps/search/?api=1&query=${pg.location?.coordinates?.[1]},${pg.location?.coordinates?.[0]}`}
+              href={pg.googleMapsUri || (pg.location?.coordinates?.[0] !== undefined && pg.location?.coordinates?.[1] !== undefined ? `https://www.google.com/maps/search/?api=1&query=${pg.location.coordinates[1]},${pg.location.coordinates[0]}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${pg.name || ''} ${pg.address?.street || ''} ${pg.address?.city || ''} ${pg.address?.state || ''} ${pg.address?.zip_code || ''}`.trim())}`)}
               target="_blank" rel="noopener noreferrer"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(66,133,244,0.1)', border: '1px solid rgba(66,133,244,0.3)', color: '#4285f4', padding: '10px 18px', borderRadius: '10px', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold' }}
             >
@@ -242,7 +249,7 @@ export default function PGDetailsModal({
           </div>
 
           {/* Our Custom Reviews Section */}
-          <ReviewsSection propertyId={pg._id || pg.id} />
+          {/* <ReviewsSection propertyId={pg._id || pg.id} /> */}
 
           {(!isOwnerView && !isFromAPI && onSave && onBook) && (
             <div style={{ display: 'flex', gap: '15px', marginTop: '40px', alignItems: 'center' }}>

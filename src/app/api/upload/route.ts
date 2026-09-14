@@ -1,14 +1,21 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { User } from '@/models/User';
-import fs from 'fs/promises';
-import path from 'path';
+import connectToDatabase from '@/utils/db';
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(req: Request) {
   try {
     const { userId } = await auth();
     let session = null;
     if (userId) {
+      await connectToDatabase();
       session = { user: await User.findOne({ clerkId: userId }) };
     }
     if (!session || !session.user || (session.user as any).role !== 'owner') {
@@ -22,26 +29,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No files uploaded' }, { status: 400 });
     }
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-    
-    // Ensure the directory exists (though we made it manually, good to check)
-    try {
-      await fs.access(uploadDir);
-    } catch {
-      await fs.mkdir(uploadDir, { recursive: true });
-    }
-
     const savedUrls: string[] = [];
 
     for (const file of files) {
       const buffer = Buffer.from(await file.arrayBuffer());
-      const ext = path.extname(file.name) || '';
-      // Use timestamp and random string to avoid name collisions
-      const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-      const filePath = path.join(uploadDir, uniqueName);
       
-      await fs.writeFile(filePath, buffer);
-      savedUrls.push(`/uploads/${uniqueName}`);
+      const secureUrl = await new Promise<string>((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'nestmatch_pgs' },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result!.secure_url);
+          }
+        );
+        uploadStream.end(buffer);
+      });
+      
+      savedUrls.push(secureUrl);
     }
 
     return NextResponse.json({ success: true, urls: savedUrls });

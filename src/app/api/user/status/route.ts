@@ -20,7 +20,8 @@ export async function GET() {
     return NextResponse.json({ 
       success: true, 
       onboarded: !!user.onboarded,
-      role: user.role
+      role: user.role,
+      lifestyle: user.lifestyle
     });
   } catch (error) {
     console.error('Error fetching user status:', error);

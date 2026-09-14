@@ -5,6 +5,7 @@ import PGCard from '@/components/PGCard';
 import FooterModals from '@/components/FooterModals';
 import { useUser, useClerk } from '@clerk/nextjs';
 import InteractiveMap from '@/components/InteractiveMap';
+import CompareModal from '@/components/CompareModal';
 
 type ModalType = 'about' | 'howItWorks' | 'listProperty' | 'contact' | 'privacy' | 'terms' | null;
 
@@ -41,6 +42,10 @@ export default function Home() {
   const [compareList, setCompareList] = useState<any[]>([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [advancedFilters, setAdvancedFilters] = useState({ budget: '', gender: 'Any', roomType: 'Any' });
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const GRANULAR_FILTERS = ['AC Room', 'Attached Bathroom', 'Veg Food Only', 'No Curfew', 'Balcony', 'WiFi'];
 
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -169,6 +174,8 @@ export default function Home() {
             setSortBy(savedState.sortBy || 'recommended');
             if (savedState.userCoords) setUserCoords(savedState.userCoords);
             setPage(savedState.page || 1);
+            if (savedState.selectedFilters) setSelectedFilters(savedState.selectedFilters);
+            if (savedState.advancedFilters) setAdvancedFilters(savedState.advancedFilters);
             setLoading(false);
             
             // Scroll to results if there are any
@@ -207,10 +214,12 @@ export default function Home() {
         sortBy,
         userCoords,
         hasMore,
-        page
+        page,
+        selectedFilters,
+        advancedFilters
       }));
     }
-  }, [pgs, hasSearched, currentQuery, sortBy, userCoords, hasMore, page]);
+  }, [pgs, hasSearched, currentQuery, sortBy, userCoords, hasMore, page, selectedFilters, advancedFilters]);
 
   // Shuffle loading text
   useEffect(() => {
@@ -239,7 +248,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [loading]);
 
-  const handleSearch = async (query: string, coordinates?: [number, number]) => {
+  const handleSearch = async (query: string, coordinates?: [number, number], customFilters?: string[]) => {
     // Prevent unauthenticated users from using the AI search
     if (isLoaded && !isSignedIn) {
       clerk.openSignIn();
@@ -252,11 +261,13 @@ export default function Home() {
     if (coordinates) setUserCoords(coordinates);
     setPage(1);
     
+    const activeFilters = customFilters || selectedFilters;
+
     try {
       const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, coordinates: coordinates || userCoords, page: 1, limit: 10 })
+        body: JSON.stringify({ query, coordinates: coordinates || userCoords, page: 1, limit: 10, filters: activeFilters, advancedFilters })
       });
       const data = await res.json();
       setPgs(data.data || []);
@@ -272,6 +283,17 @@ export default function Home() {
     }
   };
 
+  const toggleFilter = (filter: string) => {
+    const newFilters = selectedFilters.includes(filter) 
+      ? selectedFilters.filter(f => f !== filter)
+      : [...selectedFilters, filter];
+    setSelectedFilters(newFilters);
+    // If a search has already been done, fetch again with new filters
+    if (currentQuery) {
+      handleSearch(currentQuery, userCoords, newFilters);
+    }
+  };
+
   const loadMore = async () => {
     setLoadingMore(true);
     const nextPage = page + 1;
@@ -280,7 +302,7 @@ export default function Home() {
       const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: currentQuery, coordinates: userCoords, page: nextPage, limit: 10 })
+        body: JSON.stringify({ query: currentQuery, coordinates: userCoords, page: nextPage, limit: 10, filters: selectedFilters, advancedFilters })
       });
       const data = await res.json();
       if (data.data && data.data.length > 0) {
@@ -419,6 +441,115 @@ export default function Home() {
                 ))}
               </div>
             </div>
+
+            {/* Granular Checkbox Filters */}
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '25px', alignItems: 'center' }}>
+              <button 
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                style={{
+                  background: 'var(--surface-hover)',
+                  color: 'var(--primary)',
+                  border: '1px solid var(--primary)',
+                  padding: '8px 16px',
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}
+              >
+                ⚙️ Filters
+              </button>
+              
+              {GRANULAR_FILTERS.map(filter => {
+                const isActive = selectedFilters.includes(filter);
+                return (
+                  <button
+                    key={filter}
+                    onClick={() => toggleFilter(filter)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      border: `1px solid ${isActive ? 'var(--primary)' : 'var(--surface-border)'}`,
+                      background: isActive ? 'rgba(162, 53, 255, 0.1)' : 'var(--surface)',
+                      color: isActive ? 'var(--primary)' : 'var(--text)',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: isActive ? 'bold' : 'normal',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ 
+                      width: '16px', height: '16px', borderRadius: '4px', 
+                      border: `2px solid ${isActive ? 'var(--primary)' : 'var(--text-muted)'}`,
+                      background: isActive ? 'var(--primary)' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                      {isActive && <span style={{ color: 'white', fontSize: '12px' }}>✓</span>}
+                    </div>
+                    {filter}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Advanced Filters Panel */}
+            {showAdvanced && (
+              <div style={{ background: 'var(--surface)', padding: '20px', borderRadius: '12px', marginBottom: '30px', border: '1px solid var(--surface-border)', display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+                <div style={{ flex: '1 1 200px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', color: 'var(--text-muted)', marginBottom: '8px' }}>Max Budget (₹)</label>
+                  <input 
+                    type="number" 
+                    placeholder="e.g. 15000"
+                    value={advancedFilters.budget}
+                    onChange={(e) => setAdvancedFilters({...advancedFilters, budget: e.target.value})}
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--surface-hover)', color: 'var(--foreground)' }}
+                  />
+                </div>
+                <div style={{ flex: '1 1 200px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', color: 'var(--text-muted)', marginBottom: '8px' }}>Gender Type</label>
+                  <select 
+                    value={advancedFilters.gender}
+                    onChange={(e) => setAdvancedFilters({...advancedFilters, gender: e.target.value})}
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--surface-hover)', color: 'var(--foreground)' }}
+                  >
+                    <option value="Any" style={{ background: '#1a1a1a', color: '#ffffff' }}>Any</option>
+                    <option value="Male" style={{ background: '#1a1a1a', color: '#ffffff' }}>Boys</option>
+                    <option value="Female" style={{ background: '#1a1a1a', color: '#ffffff' }}>Girls</option>
+                    <option value="Unisex" style={{ background: '#1a1a1a', color: '#ffffff' }}>Coliving/Unisex</option>
+                  </select>
+                </div>
+                <div style={{ flex: '1 1 200px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', color: 'var(--text-muted)', marginBottom: '8px' }}>Room Type</label>
+                  <select 
+                    value={advancedFilters.roomType}
+                    onChange={(e) => setAdvancedFilters({...advancedFilters, roomType: e.target.value})}
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--surface-hover)', color: 'var(--foreground)' }}
+                  >
+                    <option value="Any" style={{ background: '#1a1a1a', color: '#ffffff' }}>Any</option>
+                    <option value="Single" style={{ background: '#1a1a1a', color: '#ffffff' }}>Single Sharing</option>
+                    <option value="Double" style={{ background: '#1a1a1a', color: '#ffffff' }}>Double Sharing</option>
+                    <option value="Triple" style={{ background: '#1a1a1a', color: '#ffffff' }}>Triple Sharing</option>
+                  </select>
+                </div>
+                <div style={{ flex: '1 1 100%', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button 
+                    onClick={() => {
+                      if (currentQuery) handleSearch(currentQuery, userCoords, selectedFilters);
+                      setShowAdvanced(false);
+                    }}
+                    style={{ background: 'var(--primary)', color: '#fff', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
+                  >
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
+            )}
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
               {sortedPgs.length === 0 ? (
@@ -672,20 +803,20 @@ export default function Home() {
 
           {/* Floating Compare Bar */}
           {compareList.length > 0 && (
-            <div style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', padding: '16px 24px', borderRadius: '32px', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: '20px', zIndex: 100, border: '1px solid var(--primary)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontWeight: 'bold' }}>{compareList.length} / 3</span>
-                <span style={{ color: 'var(--text-muted)' }}>Selected</span>
+            <div style={{ position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, rgba(162, 53, 255, 0.95), rgba(99, 102, 241, 0.95))', backdropFilter: 'blur(10px)', padding: '12px 24px', borderRadius: '40px', boxShadow: '0 10px 40px rgba(162, 53, 255, 0.6), 0 0 0 1px rgba(255,255,255,0.2) inset', display: 'flex', alignItems: 'center', gap: '20px', zIndex: 99999 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'white' }}>
+                <span style={{ fontWeight: '900', fontSize: '18px' }}>{compareList.length} / 3</span>
+                <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', fontWeight: 'bold' }}>Selected</span>
               </div>
               <button 
                 onClick={() => setShowCompareModal(true)}
-                style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '10px 24px', borderRadius: '24px', fontWeight: 'bold', cursor: 'pointer' }}
+                style={{ background: 'white', color: 'var(--primary)', border: 'none', padding: '10px 24px', borderRadius: '24px', fontWeight: '900', cursor: 'pointer', fontSize: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}
               >
                 Compare Now
               </button>
               <button 
                 onClick={() => setCompareList([])}
-                style={{ background: 'transparent', color: 'var(--text-muted)', border: 'none', cursor: 'pointer', fontSize: '20px', padding: '4px' }}
+                style={{ background: 'rgba(0,0,0,0.2)', color: 'white', border: 'none', cursor: 'pointer', fontSize: '20px', padding: '6px', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 &times;
               </button>
@@ -694,59 +825,11 @@ export default function Home() {
 
           {/* Compare Modal */}
           {showCompareModal && (
-            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-              <div style={{ background: 'var(--background)', width: '100%', maxWidth: '1000px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '24px', border: '1px solid var(--surface-border)', position: 'relative' }}>
-                <button 
-                  onClick={() => setShowCompareModal(false)}
-                  style={{ position: 'absolute', top: '20px', right: '20px', background: 'var(--surface)', border: 'none', width: '40px', height: '40px', borderRadius: '50%', fontSize: '24px', cursor: 'pointer', zIndex: 10 }}
-                >
-                  &times;
-                </button>
-                <div style={{ padding: '30px' }}>
-                  <h2 style={{ fontSize: '28px', marginBottom: '30px', textAlign: 'center' }}>Comparing {compareList.length} Properties</h2>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: `repeat(${compareList.length}, 1fr)`, gap: '20px' }}>
-                    {compareList.map((pg, i) => (
-                      <div key={i} style={{ background: 'var(--surface)', padding: '20px', borderRadius: '16px', border: '1px solid var(--surface-border)' }}>
-                        <div style={{ width: '100%', height: '150px', borderRadius: '12px', overflow: 'hidden', marginBottom: '15px' }}>
-                          <img src={pg.media?.[0] || pg.images?.[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </div>
-                        <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>{pg.name}</h3>
-                        <p style={{ color: 'var(--secondary)', fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>₹{pg.pricing?.monthly_rent || 'N/A'}<span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 'normal' }}>/mo</span></p>
-                        
-                        {(() => {
-                          const g = pg.gender_type;
-                          if (!g || g.includes('placeholder') || g.toLowerCase() === 'unspecified') return null;
-                          const lower = g.toLowerCase();
-                          let displayGender = null;
-                          if (lower.includes('female') || lower.includes('girl') || lower.includes('women')) displayGender = 'Female';
-                          else if (lower.includes('unisex') || lower.includes('coliv') || lower.includes('co-liv') || lower.includes('couple') || lower.includes('any')) displayGender = 'Unisex';
-                          else if (lower.includes('male') || lower.includes('boy') || lower.includes('men')) displayGender = 'Male';
-                          
-                          if (!displayGender) return null;
-                          return (
-                            <div style={{ marginBottom: '15px' }}>
-                              <strong style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: 'var(--text-muted)' }}>Gender</strong>
-                              <span style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '4px 10px', borderRadius: '12px', fontSize: '14px' }}>{displayGender}</span>
-                            </div>
-                          );
-                        })()}
-
-                        <div>
-                          <strong style={{ display: 'block', marginBottom: '10px', fontSize: '12px', color: 'var(--text-muted)' }}>Amenities</strong>
-                          <ul style={{ paddingLeft: '20px', fontSize: '14px', margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {pg.amenities?.slice(0, 8).map((a: string, idx: number) => (
-                              <li key={idx}>{a}</li>
-                            ))}
-                            {pg.amenities?.length > 8 && <li>+{pg.amenities.length - 8} more</li>}
-                          </ul>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <CompareModal 
+              properties={compareList} 
+              onClose={() => setShowCompareModal(false)}
+              onRemove={(id) => setCompareList(prev => prev.filter(c => (c._id || c.id) !== id))}
+            />
           )}
         </>
       )}

@@ -8,6 +8,7 @@ import MediaCarousel from './MediaCarousel';
 export default function AdminPropertyTable({ properties }: { properties: any[] }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
+  const [kycLoading, setKycLoading] = useState(false);
   
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -49,6 +50,43 @@ export default function AdminPropertyTable({ properties }: { properties: any[] }
     setTargetId(null);
   };
 
+  const handleKycReview = async (propertyId: string, action: 'approve' | 'reject') => {
+    let reason = '';
+    if (action === 'reject') {
+      const input = window.prompt('Please provide a reason for rejecting this KYC (e.g., Blurry ID, Name mismatch):');
+      if (input === null) return; // User cancelled
+      if (input.trim() === '') {
+        toast.error('Rejection reason is required.');
+        return;
+      }
+      reason = input.trim();
+    }
+
+    setKycLoading(true);
+    const loadingToast = toast.loading(`${action === 'approve' ? 'Approving' : 'Rejecting'} KYC...`);
+    
+    try {
+      const res = await fetch('/api/admin/properties/kyc-review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ propertyId, action, reason })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        toast.success(`KYC ${action}d successfully`, { id: loadingToast });
+        window.location.reload();
+      } else {
+        throw new Error(data.error || 'Failed to review KYC');
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'An error occurred', { id: loadingToast });
+    } finally {
+      setKycLoading(false);
+    }
+  };
+
   return (
     <>
       <div className="table-responsive-wrapper">
@@ -59,23 +97,53 @@ export default function AdminPropertyTable({ properties }: { properties: any[] }
               <th style={{ padding: '12px' }}>Owner</th>
               <th style={{ padding: '12px' }}>Type</th>
               <th style={{ padding: '12px' }}>Rent</th>
+              <th style={{ padding: '12px' }}>KYC Status</th>
               <th style={{ padding: '12px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {properties.map((p: any) => (
               <tr key={p._id.toString()} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <td style={{ padding: '12px', fontWeight: 'bold' }}>{p.name}</td>
-                <td style={{ padding: '12px' }}>
+                <td style={{ padding: '12px', fontWeight: 'bold', verticalAlign: 'top' }}>{p.name}</td>
+                <td style={{ padding: '12px', verticalAlign: 'top' }}>
                   {p.owner_id?.name || 'Unknown Owner'}
                   <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{p.owner_id?.email || 'No email provided'}</div>
                   {p.owner_id?.phone && (
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>📞 {p.owner_id.phone}</div>
                   )}
                 </td>
-                <td style={{ padding: '12px' }}>{p.gender_type}</td>
-                <td style={{ padding: '12px', color: 'var(--secondary)' }}>₹{p.pricing?.monthly_rent}</td>
-                <td style={{ padding: '12px', display: 'flex', gap: '10px' }}>
+                <td style={{ padding: '12px', verticalAlign: 'top' }}>{p.gender_type}</td>
+                <td style={{ padding: '12px', color: 'var(--secondary)', verticalAlign: 'top' }}>₹{p.pricing?.monthly_rent}</td>
+                <td style={{ padding: '12px', verticalAlign: 'top' }}>
+                  {p.kyc_status === 'verified' && <span style={{ color: '#4ade80', fontWeight: 'bold' }}>✅ Verified</span>}
+                  {p.kyc_status === 'pending' && <span style={{ color: '#facc15' }}>⏳ Pending</span>}
+                  {p.kyc_status === 'rejected' && <span style={{ color: '#ef4444' }}>❌ Rejected</span>}
+                  {(!p.kyc_status || p.kyc_status === 'unverified') && <span style={{ color: 'var(--text-muted)' }}>Unverified</span>}
+                </td>
+                <td style={{ padding: '12px', display: 'flex', gap: '10px', verticalAlign: 'top', alignItems: 'flex-start' }}>
+                  <button 
+                    onClick={() => {
+                      if (p.kyc_status === 'pending') {
+                        setSelectedProperty(p);
+                        setTimeout(() => {
+                          document.getElementById('kyc-section')?.scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
+                      }
+                    }}
+                    disabled={p.kyc_status !== 'pending'}
+                    style={{ 
+                      padding: '6px 12px', 
+                      background: p.kyc_status === 'pending' ? 'rgba(234, 179, 8, 0.2)' : 'var(--surface-border)', 
+                      border: p.kyc_status === 'pending' ? '1px solid rgba(234, 179, 8, 0.4)' : 'none', 
+                      borderRadius: '4px', 
+                      color: p.kyc_status === 'pending' ? '#facc15' : 'var(--text-muted)', 
+                      cursor: p.kyc_status === 'pending' ? 'pointer' : 'not-allowed', 
+                      fontSize: '12px', 
+                      fontWeight: 'bold' 
+                    }}
+                  >
+                    Review KYC
+                  </button>
                   <button 
                     onClick={() => setSelectedProperty(p)}
                     style={{ padding: '6px 12px', background: 'var(--surface-border)', border: 'none', borderRadius: '4px', color: 'var(--foreground)', cursor: 'pointer', fontSize: '12px' }}
@@ -146,6 +214,43 @@ export default function AdminPropertyTable({ properties }: { properties: any[] }
             {/* Content Grid */}
             <div className="grid-stack-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               
+              {/* KYC Review Section (Always show to allow manual override) */}
+              <div id="kyc-section" style={{ background: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.3)', padding: '20px', borderRadius: '12px', gridColumn: '1 / -1', marginBottom: '10px' }}>
+                <h4 style={{ color: '#facc15', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🛡️</span> KYC Documents Review
+                </h4>
+                
+                {selectedProperty.kyc_documents && selectedProperty.kyc_documents.length > 0 ? (
+                  <div style={{ marginBottom: '16px', borderRadius: '8px', overflow: 'hidden' }}>
+                    <MediaCarousel media={selectedProperty.kyc_documents} height="300px" objectFit="contain" />
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: '16px', padding: '20px', background: 'var(--surface-border)', borderRadius: '8px', color: 'var(--text-muted)', textAlign: 'center' }}>
+                    No KYC documents have been uploaded for this property yet.
+                  </div>
+                )}
+                
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, color: 'var(--text-muted)', fontSize: '14px', alignSelf: 'center', minWidth: '200px' }}>
+                    Current Status: <strong style={{ color: 'var(--foreground)' }}>{(selectedProperty.kyc_status || 'UNVERIFIED').toUpperCase()}</strong>
+                  </div>
+                  <button 
+                    onClick={() => handleKycReview(selectedProperty._id.toString(), 'reject')}
+                    disabled={kycLoading}
+                    style={{ padding: '10px 20px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.5)', color: '#ef4444', borderRadius: '6px', cursor: kycLoading ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}
+                  >
+                    Reject
+                  </button>
+                  <button 
+                    onClick={() => handleKycReview(selectedProperty._id.toString(), 'approve')}
+                    disabled={kycLoading}
+                    style={{ padding: '10px 20px', background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.5)', color: '#4ade80', borderRadius: '6px', cursor: kycLoading ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}
+                  >
+                    Approve & Verify (Override)
+                  </button>
+                </div>
+              </div>
+
               <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px' }}>
                 <h4 style={{ color: 'var(--primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span>💰</span> Pricing

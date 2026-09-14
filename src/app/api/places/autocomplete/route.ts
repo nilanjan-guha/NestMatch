@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const query = searchParams.get('q');
+  const lat = searchParams.get('lat');
+  const lng = searchParams.get('lng');
+  const types = searchParams.get('types');
 
   if (!query) {
     return NextResponse.json({ error: 'Query parameter is required' }, { status: 400 });
@@ -16,16 +19,34 @@ export async function GET(req: Request) {
   }
 
   try {
+    const requestBody: any = {
+      input: query,
+      includedRegionCodes: ['in']
+    };
+
+    if (types) {
+      requestBody.includedPrimaryTypes = types.split(',');
+    }
+
+    if (lat && lng) {
+      requestBody.locationBias = {
+        circle: {
+          center: {
+            latitude: parseFloat(lat),
+            longitude: parseFloat(lng)
+          },
+          radius: 50000.0 // 50km radius bias
+        }
+      };
+    }
+
     const response = await fetch(`https://places.googleapis.com/v1/places:autocomplete`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': apiKey,
       },
-      body: JSON.stringify({
-        input: query,
-        includedRegionCodes: ['in']
-      })
+      body: JSON.stringify(requestBody)
     });
     
     const data = await response.json();

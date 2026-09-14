@@ -13,9 +13,8 @@ export default function ReviewsSection({ propertyId }: { propertyId: string }) {
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchReviews();
-  }, [propertyId]);
+  const [aiSummary, setAiSummary] = useState<any>(null);
+  const [summarizing, setSummarizing] = useState(false);
 
   const fetchReviews = async () => {
     try {
@@ -29,6 +28,29 @@ export default function ReviewsSection({ propertyId }: { propertyId: string }) {
       console.error('Failed to fetch reviews', e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const summarizeReviews = async () => {
+    if (reviews.length === 0) return;
+    setSummarizing(true);
+    try {
+      const res = await fetch('/api/reviews/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ property_id: propertyId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAiSummary({ summary: data.summary, pros: data.pros, cons: data.cons });
+        toast.success("AI has summarized the reviews!");
+      } else {
+        toast.error("Failed to summarize reviews.");
+      }
+    } catch (e) {
+      toast.error("An error occurred during summarization.");
+    } finally {
+      setSummarizing(false);
     }
   };
 
@@ -59,6 +81,8 @@ export default function ReviewsSection({ propertyId }: { propertyId: string }) {
         setComment('');
         setRating(5);
         fetchReviews(); // Refresh list to show the new review immediately
+        // Reset AI summary if it exists so they can re-summarize including the new review
+        if (aiSummary) setAiSummary(null);
       } else {
         toast.error(data.error || 'Failed to submit review');
       }
@@ -71,7 +95,55 @@ export default function ReviewsSection({ propertyId }: { propertyId: string }) {
 
   return (
     <div style={{ marginTop: '30px', borderTop: '1px solid var(--surface-border)', paddingTop: '20px' }}>
-      <h3 style={{ fontSize: '20px', marginBottom: '20px' }}>Reviews ({reviews.length})</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+        <h3 style={{ fontSize: '20px', margin: 0 }}>Reviews ({reviews.length})</h3>
+        {reviews.length >= 2 && !aiSummary && (
+          <button 
+            onClick={summarizeReviews} 
+            disabled={summarizing}
+            style={{
+              padding: '8px 16px', background: 'linear-gradient(135deg, rgba(162, 53, 255, 0.1), rgba(162, 53, 255, 0.2))',
+              color: 'var(--primary)', border: '1px solid rgba(162, 53, 255, 0.3)', borderRadius: '20px',
+              cursor: summarizing ? 'not-allowed' : 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px'
+            }}
+          >
+            {summarizing ? '✨ Analyzing...' : '✨ Summarize with AI'}
+          </button>
+        )}
+      </div>
+
+      {/* AI Summary Card */}
+      {aiSummary && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(162, 53, 255, 0.05), rgba(74, 222, 128, 0.05))',
+          border: '1px solid var(--primary)', borderRadius: '12px', padding: '20px', marginBottom: '30px',
+          boxShadow: '0 4px 20px rgba(162, 53, 255, 0.1)'
+        }}>
+          <h4 style={{ color: 'var(--primary)', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            ✨ AI Review Summary
+          </h4>
+          <p style={{ fontStyle: 'italic', color: 'var(--foreground)', marginBottom: '15px' }}>"{aiSummary.summary}"</p>
+          
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 200px' }}>
+              <h5 style={{ color: '#4ade80', margin: '0 0 10px 0' }}>✅ Pros</h5>
+              <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--text-muted)' }}>
+                {aiSummary.pros.map((pro: string, idx: number) => (
+                  <li key={idx} style={{ marginBottom: '5px' }}>{pro}</li>
+                ))}
+              </ul>
+            </div>
+            <div style={{ flex: '1 1 200px' }}>
+              <h5 style={{ color: '#ef4444', margin: '0 0 10px 0' }}>❌ Cons</h5>
+              <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--text-muted)' }}>
+                {aiSummary.cons.map((con: string, idx: number) => (
+                  <li key={idx} style={{ marginBottom: '5px' }}>{con}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Review Form */}
       {isSignedIn ? (
