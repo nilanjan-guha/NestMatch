@@ -245,7 +245,7 @@ export default function OnboardingPage() {
           </div>
         </button>
 
-        {/* Owner Card */}
+        {/* Owner Card
         <button 
           onClick={() => handleSelection('owner')}
           disabled={isPending || isAutoRetrying}
@@ -284,6 +284,7 @@ export default function OnboardingPage() {
             </p>
           </div>
         </button>
+        */}
 
         </div>
       </div>

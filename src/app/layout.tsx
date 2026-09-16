@@ -179,7 +179,7 @@ export default function RootLayout({
           <Toaster position="bottom-right" />
           <Navbar />
           {children}
-          <ChatWidget />
+          {/* <ChatWidget /> */}
         </body>
       </html>
     </ClerkProvider>
